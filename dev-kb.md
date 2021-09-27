@@ -1,12 +1,6 @@
 # \_todo
 
-curl
-
-jq
-
 codebuild
-
-terraform plan/approve/apply
 
 # \_references
 
@@ -61,6 +55,29 @@ fields @timestamp, @logStream, @message
 | filter @logStream like /(?i)(abcd-1234)/
 #    and @message like /(?i)(xyzabc)/
 # | limit 500
+```
+
+## ec2
+
+```bash
+# get ami id
+curl http://169.254.169.254/latest/meta-data/ami-id; echo "";
+```
+
+## s3
+
+```bash
+# copy folder contents
+aws s3 cp --recursive ~/source/ s3://bucket/
+aws s3 cp --recursive s3://bucket/ ~/source/
+
+```
+
+## ssm
+
+```bash
+# jq to get ssm parameter value
+aws ssm get-parameter --name "/core/v2/portfolio_facts" | jq -r '.Parameter.Value' | jq '.environment'
 ```
 
 # bash
@@ -325,6 +342,45 @@ printf "%s\n" "s/_TFE_HOSTNAME/$TFE_HOSTNAME/g" \
 
 ```bash
 bash -l
+```
+
+## rename all _.txt to _.text
+
+https://mywiki.wooledge.org/BashFAQ/030
+
+```bash
+for f in *.txt; do
+    mv -- "$f" "${f%.txt}.text"
+done
+```
+
+On macos can use finder for batch rename
+
+https://tidbits.com/2018/06/28/macos-hidden-treasures-batch-rename-items-in-the-finder/
+
+## rename dd-mm-yyyy to yyyy-mm-dd
+
+https://unix.stackexchange.com/a/335588
+
+```bash
+#!/usr/bin/env perl
+
+# -n for dry run
+
+# string_DD-MM-YYYY_hhmm.pdf -> string_YYYY-MM-DD_hhmm.pdf
+rename -n 's/(.*)_(.*)-(.*)-(.*)_(.*.pdf)/$1_$4-$3-$2_$5/' *.pdf
+
+# dd-mm-yyyy.pdf to yyyy_mm_dd.pdf
+rename -n 's/(.*)-(.*)-(.*).(pdf)/$3_$2_$1.$4/' *.pdf
+```
+
+On macos install via brew
+
+https://newbedev.com/how-to-batch-rename-files-in-a-macos-terminal
+
+```
+brew install rename
+rename -n -e 's/_.*_/_/'  *.png
 ```
 
 ## rsync
@@ -632,6 +688,50 @@ security find-certificate -p -c "Custom Global Root CA v2"
 sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain <certificate>
 ```
 
+# curl
+
+## general
+
+```bash
+
+# loop and test for timeout
+for i in {1..9}; do curl --retry 0 --connect-timeout 3 -m 3 -kv --noproxy "*" https://sts.ap-southeast-2.amazonaws.com/&>/dev/null; echo $?; done
+
+# resolve DNS to specific IP, preserves cert chain CN/SAN and SNI routing
+curl -vvv --noproxy "*" --cacert eks-example.crt --resolve nginx.eks-example.com:443:10.xxx.xxx.xxx https://nginx.eks-example.com
+
+# smtp
+curl -v --ssl smtp://xx.xxx.xxx.xxx:587
+
+
+```
+
+## with response time
+
+https://stackoverflow.com/a/47944496
+
+```bash
+curl_time -m 3 -kv --noproxy "*" https://sts.ap-southeast-2.amazonaws.com/
+
+curl_time() {
+  curl -so /dev/null -w "\n\
+          local_ip:  %{local_ip}\n\
+     url_effective:  %{url_effective}\n\
+         remote_ip:  %{remote_ip}\n\
+     response_code:  %{response_code}\n\
+ ssl_verify_result:  %{ssl_verify_result}\n\
+     num_redirects:  %{num_redirects}\n\
+   time_namelookup:  %{time_namelookup}s\n\
+      time_connect:  %{time_connect}s\n\
+   time_appconnect:  %{time_appconnect}s\n\
+  time_pretransfer:  %{time_pretransfer}s\n\
+     time_redirect:  %{time_redirect}s\n\
+time_starttransfer:  %{time_starttransfer}s\n\
+        time_total:  %{time_total}s\n\
+-----------------------------------------------\n" "$@"
+}
+```
+
 # docker
 
 ## \_references
@@ -921,24 +1021,6 @@ docker inspect <image> | grep env_name
 
 # eks
 
-## wait for nlb readiness
-
-```bash
-function wait_nlb {
-  MAX_WAIT=180
-  ATTEMPTS=0
-  # hostname will be an empty string until the load balancer controller has begun to actually provision the load balancer
-  while [[ $(kubectl get service -n $NAMESPACE $1 -o jsonpath='{.status.loadBalancer.ingress[0].hostname}') == "" ]]; do
-    ATTEMPTS=$((ATTEMPTS+1))
-    if [[ $ATTEMPTS -gt $MAX_WAIT ]]; then
-      echo "Giving up waiting for nlb for service/$1"
-      exit 1
-    fi
-    sleep 5
-  done
-}
-```
-
 ## kubeconfig scripts
 
 ```bash
@@ -963,11 +1045,37 @@ EOF
 chmod u+x ~/bin/eks_np
 ```
 
+## wait for nlb readiness
+
+```bash
+function wait_nlb {
+  MAX_WAIT=180
+  ATTEMPTS=0
+  # hostname will be an empty string until the load balancer controller has begun to actually provision the load balancer
+  while [[ $(kubectl get service -n $NAMESPACE $1 -o jsonpath='{.status.loadBalancer.ingress[0].hostname}') == "" ]]; do
+    ATTEMPTS=$((ATTEMPTS+1))
+    if [[ $ATTEMPTS -gt $MAX_WAIT ]]; then
+      echo "Giving up waiting for nlb for service/$1"
+      exit 1
+    fi
+    sleep 5
+  done
+}
+```
+
 # gcloud
 
-## gcs
+## gcs download
 
-## versioning
+https://cloud.google.com/storage/docs/downloading-objects
+
+```bash
+gsutil cp gs://[BUCKET_NAME]/[OBJECT_NAME] [SAVE_TO_LOCATION]
+gsutil cp gs://anz-ex-services-dev-32c9ea-halyard-config/gcpnp.anz.crt.enc /Users/tanga/Documents/work/dev/
+gsutil cp gs://anz-ex-services-dev-32c9ea-halyard-config/* /Users/tanga/Documents/work/dev/
+```
+
+## gcs versioning
 
 https://cloud.google.com/storage/docs/using-object-versioning#list
 
@@ -982,16 +1090,6 @@ gsutil versioning set on gs://[BUCKET_NAME]
 # list object versions
 gsutil ls -a gs://[BUCKET_NAME]
 gsutil ls -a gs://anz-ex-services-dev-32c9ea-halyard-config
-```
-
-## download
-
-https://cloud.google.com/storage/docs/downloading-objects
-
-```bash
-gsutil cp gs://[BUCKET_NAME]/[OBJECT_NAME] [SAVE_TO_LOCATION]
-gsutil cp gs://anz-ex-services-dev-32c9ea-halyard-config/gcpnp.anz.crt.enc /Users/tanga/Documents/work/dev/
-gsutil cp gs://anz-ex-services-dev-32c9ea-halyard-config/* /Users/tanga/Documents/work/dev/
 ```
 
 ## list of public gcr.io images
@@ -1124,6 +1222,21 @@ brew upgrade go
 
 brew uninstall packageName
 brew uninstall hashicorp/tap/terraform-ls
+```
+
+# istio
+
+## disable / enable istio injection
+
+```bash
+# list status for namespaces
+kubectl get namespace -L istio-injection
+
+# disable injection
+kubectl label namespace ns istio-injection-
+
+# enable injection
+kubectl label namespace ns istio-injection=enabled --overwrite
 ```
 
 # git
@@ -1577,78 +1690,6 @@ git push https://github.com/eepmoi/k8s-debug-pod.git master
 
 # k8s
 
-## apiversion
-
-https://akomljen.com/kubernetes-api-resources-which-group-and-version-to-use/
-
-https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-apiversion-definition-guide.html
-
-```bash
-# shows kubectl commands with short names (eg get pods = get po)
-# Note can't find online but assume entries with empty APIGROUP use "apiVersion: v1"
-list api-resources
-NAME                              SHORTNAMES   APIGROUP                       NAMESPACED   KIND
-pods                              po                                          true         Pod
-
-kubectl api-resources -o wide
-NAME                              SHORTNAMES   APIGROUP                       NAMESPACED   KIND
-bindings                                                                      true         Binding
-componentstatuses                 cs                                          false        ComponentStatus
-configmaps                        cm                                          true         ConfigMap
-endpoints                         ep                                          true         Endpoints
-events                            ev                                          true         Event
-limitranges                       limits                                      true         LimitRange
-<snip>
-controllerrevisions                            apps                           true         ControllerRevision
-daemonsets                        ds           apps                           true         DaemonSet
-deployments                       deploy       apps                           true         Deployment
-replicasets                       rs           apps                           true         ReplicaSet
-statefulsets                      sts          apps                           true         StatefulSet
-
-# list api-resources for group apps - referenced in "apiVersion: apps/v1"
-# eg for "kind: Deployment", use apigroup = apps
-kubectl api-resources --api-group apps -o wide
-NAME                  SHORTNAMES   APIGROUP   NAMESPACED   KIND                 VERBS
-controllerrevisions                apps       true         ControllerRevision   [create delete deletecollection get list patch update watch]
-daemonsets            ds           apps       true         DaemonSet            [create delete deletecollection get list patch update watch]
-deployments           deploy       apps       true         Deployment           [create delete deletecollection get list patch update watch]
-replicasets           rs           apps       true         ReplicaSet           [create delete deletecollection get list patch update watch]
-statefulsets          sts          apps       true         StatefulSet          [create delete deletecollection get list patch update watch]
-
-# get api-versions
-kubectl api-versions
-admissionregistration.k8s.io/v1beta1
-apiextensions.k8s.io/v1beta1
-apiregistration.k8s.io/v1
-apiregistration.k8s.io/v1beta1
-apps/v1
-apps/v1beta1
-apps/v1beta2
-authentication.k8s.io/v1
-authentication.k8s.io/v1beta1
-authorization.k8s.io/v1
-authorization.k8s.io/v1beta1
-autoscaling/v1
-autoscaling/v2beta1
-batch/v1
-batch/v1beta1
-certificates.k8s.io/v1beta1
-crd.projectcalico.org/v1
-extensions/v1beta1
-internal.autoscaling.k8s.io/v1alpha1
-metrics.k8s.io/v1beta1
-networking.gke.io/v1beta1
-networking.k8s.io/v1
-policy/v1beta1
-rbac.authorization.k8s.io/v1
-rbac.authorization.k8s.io/v1beta1
-scalingpolicy.kope.io/v1alpha1
-scheduling.k8s.io/v1beta1
-storage.k8s.io/v1
-storage.k8s.io/v1beta1
-v1
-```
-
 ## apply from stdin
 
 ```bash
@@ -1763,6 +1804,60 @@ deployment.apps/my-nginx configured
 rm /tmp/nginx.yaml
 ```
 
+## gatekeeper
+
+### disable policy
+
+```bash
+# describe constraint, shows violations
+kubectl describe enforcesecurepeerauthentication -n gatekeeper-system
+
+# get constraint
+kubectl get constraint | grep enforcesecurepeerauthentication
+
+# edit constraint eg to add excluded namespace
+kubectl edit enforcesecurepeerauthentication.constraints.gatekeeper.sh/enforcesecurepeerauthentication
+```
+
+### generate report of violations
+
+```bash
+#!/bin/bash
+
+for c in $(kubectl get constraint -o name); do
+  echo "Examine $c: kubectl get $c -o json"
+  kubectl get $c -o json | jq ".status.auditTimestamp,.status.totalViolations,.status.violations" # only shows 20 violations by default
+done
+```
+
+### wait for gatekeeper webhook readiness
+
+https://github.com/open-policy-agent/gatekeeper/issues/1156
+
+```bash
+MAX_WAIT=180
+ATTEMPTS=0
+echo "Waiting for Gatekeeper webhook to be ready"
+until kubectl label ns gatekeeper-system wait-for-gatekeeper=ready >/dev/null 2>&1; do
+  ATTEMPTS=$((ATTEMPTS+1))
+  if [[ $ATTEMPTS -gt $MAX_WAIT ]]; then
+    echo "Giving up waiting for Gatekeeper webhook"
+    exit 1
+  fi
+  sleep 1
+done
+ATTEMPTS=0
+echo "Remove temp gatekeeper-system namespace label"
+until kubectl label ns gatekeeper-system wait-for-gatekeeper- >/dev/null 2>&1; do
+  ATTEMPTS=$((ATTEMPTS+1))
+  if [[ $ATTEMPTS -gt $MAX_WAIT ]]; then
+    echo "Giving up removing temp gatekeeper-system namespace label"
+    exit 1
+  fi
+  sleep 1
+done
+```
+
 ## jsonpath
 
 ```json
@@ -1820,19 +1915,45 @@ kubectl get nodes -o jsonpath="{.items[*].metadata.labels['topology\.kubernetes\
 
 ## kubectl
 
-### list api
+### exec into pod
 
 ```bash
-# api services
-kubectl get apiservice
+# interactive mode using pod name
+kubectl get pods -n artifactory
+NAME                                   READY     STATUS    RESTARTS   AGE
+artifactory-artifactory-ha-member-0    1/1       Running   0          12d
+artifactory-artifactory-ha-member-1    1/1       Running   0          12d
+artifactory-artifactory-ha-primary-0   1/1       Running   0          12d
+artifactory-nginx-79cd548bbc-nrh48     1/1       Running   1          12d
 
-# api resources - used to get api group of resource type
-kubectl api-resources
-kubectl api-resources | grep node
+kubectl exec -it -n artifactory artifactory-artifactory-ha-member-0 -- /bin/bash
+kubectl exec -it -n artifactory artifactory-artifactory-ha-primary-0 -- /bin/bash
 
-# api resources for namespace
-ns=istio-perimeter
-kubectl api-resources --verbs=list --namespaced -o name | xargs -n 1 kubectl get -o name -n $ns
+# using label for instance number 0 (1 for second replica, 2 for third replica etc)
+kubectl get pods -n csp-spinnaker --show-labels
+NAME                                         READY   STATUS    RESTARTS   AGE    LABELS
+csp-spinnaker-redis-master-0                 1/1     Running   0          27h    app=redis,chart=redis-3.8.0,controller-revision-hash=csp-spinnaker-redis-master-78465dc547,release=csp-spinnaker,role=master,statefulset.kubernetes.io/pod-name=csp-spinnaker-redis-master-0
+csp-spinnaker-redis-slave-69d9b768bf-czjvz   1/1     Running   2          27h    app=redis,chart=redis-3.8.0,pod-template-hash=69d9b768bf,release=csp-spinnaker,role=slave
+csp-spinnaker-spinnaker-halyard-0            1/1     Running   0          22h    app=csp-spinnaker-spinnaker,chart=spinnaker-1.6.1,component=halyard,controller-revision-hash=csp-spinnaker-spinnaker-halyard-7bf96b5fd5,heritage=Tiller,release=csp-spinnaker,statefulset.kubernetes.io/pod-name=csp-spinnaker-spinnaker-halyard-0
+
+kubectl exec --namespace=csp-spinnaker -it $(kubectl get pod -l "app=csp-spinnaker-spinnaker" --namespace=csp-spinnaker -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
+kubectl exec --namespace=csp-spinnaker -it $(kubectl get pod -l "app.kubernetes.io/name=clouddriver" --namespace=csp-spinnaker -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
+
+# exec into pod and run command
+kubectl exec -n artifactory -it artifactory-artifactory-ha-primary-0 -- /bin/bash -c "curl --noproxy \"*\" -u \"andy.tang:xxx\" -X POST \"http://localhost:8081/artifactory/api/plugins/reload\""
+kubectl exec -n artifactory -it artifactory-artifactory-ha-member-0 -- /bin/bash -c "curl --noproxy \"*\" -u \"andy.tang:xxx\" -X POST \"http://localhost:8081/artifactory/api/plugins/reload\""
+kubectl exec -n artifactory -it artifactory-artifactory-ha-member-1 -- /bin/bash -c "curl --noproxy \"*\" -u \"andy.tang:xxx\" -X POST \"http://localhost:8081/artifactory/api/plugins/reload\""
+
+# use label and run curl
+kubectl exec --context lt-andy-au1-perimeter-general -n eks-tvt-d "$(kubectl get pod --context lt-andy-au1-perimeter-general -n eks-tvt-d -l run=my-nginx -o jsonpath={.items..metadata.name})" -c istio-proxy -- curl -sS -vvv -k http://localhost:8080
+```
+
+### ignore-not-found
+
+```bash
+# returns 0 error code if not found vs 1.
+kubectl delete apiservice xxx --ignore-not-found
+kubectl delete apiservice xxx
 ```
 
 ### get AZs
@@ -1855,6 +1976,100 @@ NODE                                                NODEGROUP                   
 ip-10-191-123-179.ap-southeast-2.compute.internal   andy-ops-type1-sn-06b0-easy-terrier   ap-southeast-2a
 ip-10-191-124-112.ap-southeast-2.compute.internal   andy-ops-type1-sn-02b0-grown-man      ap-southeast-2b
 ip-10-191-127-16.ap-southeast-2.compute.internal    andy-ops-type1-sn-0d9c-curious-fawn   ap-southeast-2c
+```
+
+## list apiversion
+
+https://akomljen.com/kubernetes-api-resources-which-group-and-version-to-use/
+
+https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-apiversion-definition-guide.html
+
+```bash
+# shows kubectl commands with short names (eg get pods = get po)
+# Note can't find online but assume entries with empty APIGROUP use "apiVersion: v1"
+list api-resources
+NAME                              SHORTNAMES   APIGROUP                       NAMESPACED   KIND
+pods                              po                                          true         Pod
+
+kubectl api-resources -o wide
+NAME                              SHORTNAMES   APIGROUP                       NAMESPACED   KIND
+bindings                                                                      true         Binding
+componentstatuses                 cs                                          false        ComponentStatus
+configmaps                        cm                                          true         ConfigMap
+endpoints                         ep                                          true         Endpoints
+events                            ev                                          true         Event
+limitranges                       limits                                      true         LimitRange
+<snip>
+controllerrevisions                            apps                           true         ControllerRevision
+daemonsets                        ds           apps                           true         DaemonSet
+deployments                       deploy       apps                           true         Deployment
+replicasets                       rs           apps                           true         ReplicaSet
+statefulsets                      sts          apps                           true         StatefulSet
+
+# list api-resources for group apps - referenced in "apiVersion: apps/v1"
+# eg for "kind: Deployment", use apigroup = apps
+kubectl api-resources --api-group apps -o wide
+NAME                  SHORTNAMES   APIGROUP   NAMESPACED   KIND                 VERBS
+controllerrevisions                apps       true         ControllerRevision   [create delete deletecollection get list patch update watch]
+daemonsets            ds           apps       true         DaemonSet            [create delete deletecollection get list patch update watch]
+deployments           deploy       apps       true         Deployment           [create delete deletecollection get list patch update watch]
+replicasets           rs           apps       true         ReplicaSet           [create delete deletecollection get list patch update watch]
+statefulsets          sts          apps       true         StatefulSet          [create delete deletecollection get list patch update watch]
+
+# get api-versions
+kubectl api-versions
+admissionregistration.k8s.io/v1beta1
+apiextensions.k8s.io/v1beta1
+apiregistration.k8s.io/v1
+apiregistration.k8s.io/v1beta1
+apps/v1
+apps/v1beta1
+apps/v1beta2
+authentication.k8s.io/v1
+authentication.k8s.io/v1beta1
+authorization.k8s.io/v1
+authorization.k8s.io/v1beta1
+autoscaling/v1
+autoscaling/v2beta1
+batch/v1
+batch/v1beta1
+certificates.k8s.io/v1beta1
+crd.projectcalico.org/v1
+extensions/v1beta1
+internal.autoscaling.k8s.io/v1alpha1
+metrics.k8s.io/v1beta1
+networking.gke.io/v1beta1
+networking.k8s.io/v1
+policy/v1beta1
+rbac.authorization.k8s.io/v1
+rbac.authorization.k8s.io/v1beta1
+scalingpolicy.kope.io/v1alpha1
+scheduling.k8s.io/v1beta1
+storage.k8s.io/v1
+storage.k8s.io/v1beta1
+v1
+```
+
+### list apiservice
+
+```bash
+# api services
+kubectl get apiservice
+
+# api resources - used to get api group of resource type
+kubectl api-resources
+kubectl api-resources | grep node
+
+# api resources for namespace
+kubectl api-resources --verbs=list --namespaced -o name | xargs -n 1 kubectl get -o name -n ns
+```
+
+### multiple labels / selector syntax
+
+```bash
+kubectl logs --selector=app=artifactory-ha,component=nginx,release=artifactory -n artifactory
+kubectl logs --selector app=artifactory-ha,component=nginx,release=artifactory -n artifactory
+kubectl logs -l app=artifactory-ha,component=nginx,release=artifactory -n artifactory
 ```
 
 ### pv / pvc
@@ -1938,6 +2153,16 @@ Mounted By:    prometheus-694c5884cc-ng979
 Events:        <none>
 ```
 
+### remove finalizer
+
+https://stackoverflow.com/a/59667608
+
+```bash
+kubectl get namespace stuck-namespace -o json \
+  | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/" \
+  | kubectl replace --raw /api/v1/namespaces/stuck-namespace/finalize -f -
+```
+
 ### replace config map / secret
 
 ```bash
@@ -1946,65 +2171,24 @@ kubectl create configmap -n tenant-a nginx-configmap --from-file=nginx.conf=./ng
 kubectl create secret -n tenant-a tls nginx-server-certs --key nginx.eks-example.key --cert nginx.eks-example.crt -o yaml --dry-run=client | kubectl replace -f -
 ```
 
-### move secret across namespaces
+### secrets
+
+**move secret across namespaces**
 
 https://computingforgeeks.com/copy-kubernetes-secrets-between-namespaces/
 
 ```bash
-kubectl delete secret ingress-wildcard-tls -n ee-iam-smpvault-dev
-kubectl get secret ingress-wildcard-tls -n ee-iam-smpvault-dev -o yaml
+kubectl delete secret ingress-wildcard-tls -n ns
+kubectl get secret ingress-wildcard-tls -n ns -o yaml
 
 # seems to add annotation to new secret, need to debug why
-kubectl get secret ingress-wildcard-tls -n istio-internal -o json | jq '{apiVersion,data,kind,metadata,type} | .metadata |= {"annotations", "name"}' | kubectl apply -n ee-iam-smpvault-dev -f -
+kubectl get secret ingress-wildcard-tls -n istio-internal -o json | jq '{apiVersion,data,kind,metadata,type} | .metadata |= {"annotations", "name"}' | kubectl apply -n ns -f -
 ```
 
-### ignore-not-found
+**decode base64 secret**
 
 ```bash
-# returns 0 error code if not found vs 1.
-kubectl delete apiservice xxx --ignore-not-found
-kubectl delete apiservice xxx
-```
-
-### multiple labels / selector syntax
-
-```bash
-kubectl logs --selector=app=artifactory-ha,component=nginx,release=artifactory -n artifactory
-kubectl logs --selector app=artifactory-ha,component=nginx,release=artifactory -n artifactory
-kubectl logs -l app=artifactory-ha,component=nginx,release=artifactory -n artifactory
-```
-
-### exec into pod
-
-```bash
-# interactive mode using pod name
-kubectl get pods -n artifactory
-NAME                                   READY     STATUS    RESTARTS   AGE
-artifactory-artifactory-ha-member-0    1/1       Running   0          12d
-artifactory-artifactory-ha-member-1    1/1       Running   0          12d
-artifactory-artifactory-ha-primary-0   1/1       Running   0          12d
-artifactory-nginx-79cd548bbc-nrh48     1/1       Running   1          12d
-
-kubectl exec -it -n artifactory artifactory-artifactory-ha-member-0 -- /bin/bash
-kubectl exec -it -n artifactory artifactory-artifactory-ha-primary-0 -- /bin/bash
-
-# using label for instance number 0 (1 for second replica, 2 for third replica etc)
-kubectl get pods -n csp-spinnaker --show-labels
-NAME                                         READY   STATUS    RESTARTS   AGE    LABELS
-csp-spinnaker-redis-master-0                 1/1     Running   0          27h    app=redis,chart=redis-3.8.0,controller-revision-hash=csp-spinnaker-redis-master-78465dc547,release=csp-spinnaker,role=master,statefulset.kubernetes.io/pod-name=csp-spinnaker-redis-master-0
-csp-spinnaker-redis-slave-69d9b768bf-czjvz   1/1     Running   2          27h    app=redis,chart=redis-3.8.0,pod-template-hash=69d9b768bf,release=csp-spinnaker,role=slave
-csp-spinnaker-spinnaker-halyard-0            1/1     Running   0          22h    app=csp-spinnaker-spinnaker,chart=spinnaker-1.6.1,component=halyard,controller-revision-hash=csp-spinnaker-spinnaker-halyard-7bf96b5fd5,heritage=Tiller,release=csp-spinnaker,statefulset.kubernetes.io/pod-name=csp-spinnaker-spinnaker-halyard-0
-
-kubectl exec --namespace=csp-spinnaker -it $(kubectl get pod -l "app=csp-spinnaker-spinnaker" --namespace=csp-spinnaker -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
-kubectl exec --namespace=csp-spinnaker -it $(kubectl get pod -l "app.kubernetes.io/name=clouddriver" --namespace=csp-spinnaker -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
-
-# exec into pod and run command
-kubectl exec -n artifactory -it artifactory-artifactory-ha-primary-0 -- /bin/bash -c "curl --noproxy \"*\" -u \"andy.tang:xxx\" -X POST \"http://localhost:8081/artifactory/api/plugins/reload\""
-kubectl exec -n artifactory -it artifactory-artifactory-ha-member-0 -- /bin/bash -c "curl --noproxy \"*\" -u \"andy.tang:xxx\" -X POST \"http://localhost:8081/artifactory/api/plugins/reload\""
-kubectl exec -n artifactory -it artifactory-artifactory-ha-member-1 -- /bin/bash -c "curl --noproxy \"*\" -u \"andy.tang:xxx\" -X POST \"http://localhost:8081/artifactory/api/plugins/reload\""
-
-# use label and run curl
-kubectl exec --context lt-andy-au1-perimeter-general -n eks-tvt-d "$(kubectl get pod --context lt-andy-au1-perimeter-general -n eks-tvt-d -l run=my-nginx -o jsonpath={.items..metadata.name})" -c istio-proxy -- curl -sS -vvv -k http://localhost:8080
+kubectl get secret ingress-wildcard-tls -n ns --context cluster -o json | jq '.data | map_values(@base64d)'
 ```
 
 ## namespace
@@ -2171,34 +2355,6 @@ while [[ $(kubectl -n gatekeeper-system get pods -l control-plane=audit-controll
   ATTEMPTS=$((ATTEMPTS+1))
   if [[ $ATTEMPTS -gt $MAX_WAIT ]]; then
     echo "Giving up waiting for audit-controller deployment"
-    exit 1
-  fi
-  sleep 1
-done
-```
-
-## wait for gatekeeper webhook readiness
-
-https://github.com/open-policy-agent/gatekeeper/issues/1156
-
-```bash
-MAX_WAIT=180
-ATTEMPTS=0
-echo "Waiting for Gatekeeper webhook to be ready"
-until kubectl label ns gatekeeper-system wait-for-gatekeeper=ready >/dev/null 2>&1; do
-  ATTEMPTS=$((ATTEMPTS+1))
-  if [[ $ATTEMPTS -gt $MAX_WAIT ]]; then
-    echo "Giving up waiting for Gatekeeper webhook"
-    exit 1
-  fi
-  sleep 1
-done
-ATTEMPTS=0
-echo "Remove temp gatekeeper-system namespace label"
-until kubectl label ns gatekeeper-system wait-for-gatekeeper- >/dev/null 2>&1; do
-  ATTEMPTS=$((ATTEMPTS+1))
-  if [[ $ATTEMPTS -gt $MAX_WAIT ]]; then
-    echo "Giving up removing temp gatekeeper-system namespace label"
     exit 1
   fi
   sleep 1
@@ -2423,7 +2579,6 @@ index=au_aws_common_platform sourcetype="au_aws_networklogs" log_group="/core/ne
 index=au_tfe_common_app sourcetype=anz_tfe_all_syslog earliest=03/25/2020:9:17:08 latest=03/25/2020:9:17:10 "Gateway Timeout" NOT "Server error: http: TLS handshake error from" NOT "Connecting to LaunchDarkly stream using URL"
 ```
 
-
 # stern
 
 https://kubernetes.io/blog/2016/10/tail-kubernetes-with-stern/
@@ -2440,6 +2595,54 @@ stern --context cluster "istio-ingressgateway-.*" --namespace istio-internal --c
 ```
 
 # terraform
+
+## \_init plan apply
+
+```bash
+# init
+terraform init -no-color \
+  -input=false \
+  -backend-config "bucket=$TF_STATE_BUCKET" \
+  -backend-config "dynamodb_table=$TF_STATE_TABLE" \
+  -backend-config "key=state/clusters/${TF_VAR_xxx}/default.tfstate"
+TF_INIT_STATUS=$?
+if [[ $TF_INIT_STATUS -ne 0 ]]; then echo "error during terraform init for $TF_VAR_xxx"; exit $TF_INIT_STATUS; fi
+
+# plan
+terraform plan -no-color \
+  -input=false \
+  -out="${TF_VAR_xxx}_infra.tfplan" \
+  -var-file $CODEBUILD_SRC_DIR/$TF_VAR_environment/$TF_VAR_xxx.tfvars \
+TF_PLAN_STATUS=$?
+if [[ $TF_PLAN_STATUS -ne 0 ]]; then echo "error during plan for $TF_VAR_xxx"; exit $TF_PLAN_STATUS; fi
+mkdir -p $CODEBUILD_SRC_DIR/plans
+mv -v "${TF_VAR_xxx}_infra.tfplan" $CODEBUILD_SRC_DIR/plans/
+
+# apply
+cp -v "$CODEBUILD_SRC_DIR_plans/${TF_VAR_xxx}_infra.tfplan" .
+terraform apply -no-color \
+  -input=false \
+  "${TF_VAR_xxx}_infra.tfplan"
+TF_APPLY_STATUS=$?
+if [[ $TF_APPLY_STATUS -ne 0 ]]; then echo "error during apply for $TF_VAR_xxx"; exit $TF_APPLY_STATUS; fi
+
+# destroy plan
+terraform plan -no-color \
+  -input=false \
+  -out="${TF_VAR_xxx}_infra_destroy.tfplan" \
+  -var-file $CODEBUILD_SRC_DIR/$TF_VAR_org_entity/$TF_VAR_environment/$TF_VAR_xxx.tfvars \
+  -var-file $CODEBUILD_SRC_DIR/$TF_VAR_org_entity/$TF_VAR_environment/istio-meshes.tfvars \
+  -destroy
+TF_DESTROY_PLAN_STATUS=$?
+if [[ $TF_DESTROY_PLAN_STATUS -ne 0 ]]; then echo "error during destroy plan destroy for $TF_VAR_xxx"; exit $TF_DESTROY_PLAN_STATUS; fi
+echo "Apply destroy plan"
+
+# destroy apply
+terraform apply -no-color \
+  -input=false \
+  "${TF_VAR_xxx}_infra_destroy.tfplan"
+TF_DESTROY_APPLY_STATUS=$?
+```
 
 ## list vs map vs set
 
@@ -2470,6 +2673,20 @@ Potential workaround using TF_CLI_ARGS
 https://www.terraform.io/docs/commands/environment-variables.html#tf_cli_args-and-tf_cli_args_name
 
 https://archive.sweetops.com/terraform/2019/03/
+
+# vim
+
+## select all and delete
+
+https://unix.stackexchange.com/questions/161821/how-can-i-delete-all-lines-in-a-file-using-vi
+
+```
+I always use ggVG
+gg jumps to the start of the current editing file
+V (capitalized v) will select the current line. In this case the first line of the current editing file
+G (capitalized g) will jump to the end of the file. In this case, since I selected the first line, G will select the whole text in this file.
+Then you can simply press d or x to delete all the lines.
+```
 
 # yamllint
 
