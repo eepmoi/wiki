@@ -2644,6 +2644,18 @@ terraform apply -no-color \
 TF_DESTROY_APPLY_STATUS=$?
 ```
 
+## backend cannot use variables
+
+https://github.com/hashicorp/terraform/issues/13022
+
+https://github.com/hashicorp/terraform/issues/17288
+
+Potential workaround using TF_CLI_ARGS
+
+https://www.terraform.io/docs/commands/environment-variables.html#tf_cli_args-and-tf_cli_args_name
+
+https://archive.sweetops.com/terraform/2019/03/
+
 ## list vs map vs set
 
 https://www.reddit.com/r/Terraform/comments/bwo2w1/how_are_we_now_supposed_to_iterate_over_a_list_to/eq8mbb8?utm_source=share&utm_medium=web2x&context=3
@@ -2662,17 +2674,9 @@ Maps are collections where those values are not in a particular order but are ea
 
 Sets are, similar to maps, collections where the values are in no particular order, but unlike maps the values are not assigned a key string. Instead, the values identify themselves.
 
-## backend cannot use variables
+## plan visualizer
 
-https://github.com/hashicorp/terraform/issues/13022
-
-https://github.com/hashicorp/terraform/issues/17288
-
-Potential workaround using TF_CLI_ARGS
-
-https://www.terraform.io/docs/commands/environment-variables.html#tf_cli_args-and-tf_cli_args_name
-
-https://archive.sweetops.com/terraform/2019/03/
+https://github.com/im2nguyen/rover
 
 # vim
 
