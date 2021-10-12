@@ -1039,7 +1039,7 @@ aws eks update-kubeconfig --region ap-southeast-2 --name np-au1-ops --alias np-a
 aws eks update-kubeconfig --region ap-southeast-2 --name mht-np-au1-workload --alias mht-np-au1-workload --role arn:aws:iam::675218639914:role/mht-np-au1-workload-clusteradmin
 aws eks update-kubeconfig --region ap-southeast-2 --name mht-np-au1-services --alias mht-np-au1-services --role arn:aws:iam::675218639914:role/mht-np-au1-services-clusteradmin
 aws eks update-kubeconfig --region ap-southeast-2 --name lt-np-au1-perimeter-payments --alias lt-np-au1-perimeter-payments --role arn:aws:iam::675218639914:role/lt-np-au1-perimeter-payments-clusteradmin
-aws eks update-kubeconfig --region ap-southeast-2 --name lt-np-au1-perimeter-general --alias lt-np-au1-perimeter-general --role arn:aws:iam::675218639914:role/lt-np-au1-perimeter-general-clusteradmin
+aws eks update-kubeconfig --region ap-southeast-2 --name cluster --alias cluster --role arn:aws:iam::675218639914:role/cluster-clusteradmin
 EOF
 
 chmod u+x ~/bin/eks_np
@@ -1202,6 +1202,10 @@ helm list -n ns --kube-context cluster
 helm uninstall abc-helm --kube-context cluster -n ns
 helm uninstall abc-helm --kube-context cluster -n ns --dry-run
 
+# uninstall release based on filter
+# https://stackoverflow.com/a/58301975
+helm list --kube-context cluster --namespace ns --short --filter 'bookinfo.*' | xargs -L1 -n1 -r helm uninstall $1 --kube-context cluster --namespace ns --dry-run
+
 # package
 helm package ./abc
 
@@ -1226,6 +1230,24 @@ brew uninstall hashicorp/tap/terraform-ls
 
 # istio
 
+## debugging general
+
+```bash
+# get proxy status of all sidecars
+istioctl proxy-status --context cluster -i istio-mesh
+
+# get auth status of pods
+istioctl experimental authz check pod --context cluster -i istio-mesh -n ns
+
+# get routes
+istioctl proxy-config routes pod.ns --context cluster
+
+# get listeners
+# https://discuss.istio.io/t/istio-envoy-proxy-sidecar-is-blocking-http-traffic-on-port-8088/5778/4
+
+istioctl proxy-config listeners pod --context cluster -i istio-mesh -n ns --type HTTP -o json | jq ".[].address"
+```
+
 ## disable / enable istio injection
 
 ```bash
@@ -1237,6 +1259,26 @@ kubectl label namespace ns istio-injection-
 
 # enable injection
 kubectl label namespace ns istio-injection=enabled --overwrite
+```
+
+## set logging level
+
+```bash
+# set log level
+istioctl proxy-config log pod --context cluster -n ns --level info
+istioctl proxy-config log pod --context cluster -n ns --level tracing:debug
+
+# Retrieve information about logging levels for a given pod from Envoy.
+istioctl proxy-config log <pod-name[.namespace]>
+
+# Update levels of the all loggers
+istioctl proxy-config log <pod-name[.namespace]> --level none
+
+# Update levels of the specified loggers.
+istioctl proxy-config log <pod-name[.namespace]> --level http:debug,redis:debug
+
+# Reset levels of all the loggers to default value (warning).
+istioctl proxy-config log <pod-name[.namespace]> -r
 ```
 
 # git
@@ -1300,6 +1342,10 @@ git checkout pr/999
 ```bash
 # cherry pick sha to commit (does add/merge/commit for you like pull)
 git cherry-pick 3cf974a33aa85e4b25278d02a3dd9452ec827e74
+
+# without commit
+git cherry-pick -n 3cf974a33aa85e4b25278d02a3dd9452ec827e74
+git reset # unstage changes
 ```
 
 ## clone add, commit, push
@@ -1398,6 +1444,21 @@ https://stackoverflow.com/questions/4479225/how-to-output-git-log-with-the-first
 # show one line commits with abbreviated commit sha and tags
 git log --pretty=oneline --abbrev-commit
 ```
+
+## patch
+
+https://devconnected.com/how-to-create-and-apply-git-patch-files/#Create_Git_Patch_for_Specific_Commit
+
+```bash
+# create patch for single commit
+git format-patch -1 <commit_sha>
+
+# apply patch
+git am <patch_file>
+
+```
+
+## prune local branches that are no longer in remote
 
 ## prune local branches that are no longer in remote
 
@@ -1944,7 +2005,7 @@ kubectl exec -n artifactory -it artifactory-artifactory-ha-primary-0 -- /bin/bas
 kubectl exec -n artifactory -it artifactory-artifactory-ha-member-0 -- /bin/bash -c "curl --noproxy \"*\" -u \"andy.tang:xxx\" -X POST \"http://localhost:8081/artifactory/api/plugins/reload\""
 kubectl exec -n artifactory -it artifactory-artifactory-ha-member-1 -- /bin/bash -c "curl --noproxy \"*\" -u \"andy.tang:xxx\" -X POST \"http://localhost:8081/artifactory/api/plugins/reload\""
 
-# use label and run curl
+# use label and run curl assuming only one pod replica
 kubectl exec --context lt-andy-au1-perimeter-general -n eks-tvt-d "$(kubectl get pod --context lt-andy-au1-perimeter-general -n eks-tvt-d -l run=my-nginx -o jsonpath={.items..metadata.name})" -c istio-proxy -- curl -sS -vvv -k http://localhost:8080
 ```
 
@@ -2587,7 +2648,7 @@ https://kubernetes.io/blog/2016/10/tail-kubernetes-with-stern/
 stern "artifactory-artifactory-ha-.*" --namespace artifactory --tail 50
 stern "^(spin-orca.*|spin-echo.*|spin-clouddriver.*)$" -n csp-spinnaker --tail 50
 
-stern --context cluster "istio-ingressgateway-.*" --namespace istio-perimeter-general --color=always
+stern --context cluster "istio-ingressgateway-.*" --namespace istio-mesh --color=always
 stern "istio-ingressgateway-.*" --namespace istio-internal --tail 30 --color=always | grep myapp.ns.svc.cluster.local
 
 # can start stern logging before pod comes up, useful for capturing full log when cycling pods to debug
