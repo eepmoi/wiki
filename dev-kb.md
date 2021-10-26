@@ -84,6 +84,12 @@ aws ssm get-parameter --name "/core/v2/portfolio_facts" | jq -r '.Parameter.Valu
 
 ## \_my .bash_profile
 
+Install following first:
+
+- `brew install bash-completion`
+
+- `brew install git`
+
 ```bash
 # my bash_exec
 export PATH="/Users/tanga/.bash_exec:$PATH"
@@ -104,6 +110,13 @@ pgrep -q alpaca || nohup ~/go/bin/alpaca -d global -C http://proxy.com/gblproxy.
 # aliases
 alias alpaca_on="launchctl load ~/Library/LaunchAgents/com.samuong.alpaca.plist"
 alias alpaca_off="launchctl unload ~/Library/LaunchAgents/com.samuong.alpaca.plist"
+
+# bash completion
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+. $(brew --prefix)/etc/bash_completion
+fi
+
+### git prompt
 
 # store colors
 MAGENTA="\[\033[0;35m\]"
@@ -163,9 +176,6 @@ source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.
 
 # kubectl completion support
 source <(kubectl completion bash)
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-. $(brew --prefix)/etc/bash_completion
-fi
 ```
 
 ## arrays and looping
@@ -1678,13 +1688,20 @@ Keep to 50 characters for single line, hard limit in github of 72
 https://crunchify.com/how-to-set-github-user-name-and-user-email-per-repository-different-config-for-different-repository/
 
 ```bash
+# set globally
+git config --global user.name "Andy Tang"
+git config --global user.email "andytang80@hotmail.com"
+
 # cd into repo
-git config user.email "andytang80@hotmail.com"
 git config user.name "Andy Tang"
+git config user.email "andytang80@hotmail.com"
 
 # change author of last commit
 # https://www.git-tower.com/learn/git/faq/change-author-name-email/
 git commit --amend --author="John Doe <john@doe.org>"
+
+# reset author of last commit
+git commit --amend --reset-author
 ```
 
 ## tags
