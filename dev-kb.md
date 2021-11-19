@@ -156,11 +156,67 @@ brew install bash-completion@2
 brew install git
 ```
 
-### source folder
+### .bash_profile
+
+```bash
+# my bash_exec
+# export PATH="/Users/tanga/.bash_exec:$PATH"
+
+# source bash_source folder
+if [ -d ~/.bash_source ]; then
+    for file in ~/.bash_source/*; do
+        . "$file"
+    done
+fi
+
+# rbenv
+eval "$(rbenv init - bash)"
+
+# bash completion
+export BASH_COMPLETION_COMPAT_DIR="/usr/local/etc/bash_completion.d"
+[[ -r "/usr/local/etc/profile.d/bash_completion.sh" ]] && . "/usr/local/etc/profile.d/bash_completion.sh"
+
+# kubectl completion
+source <(kubectl completion bash)
+
+# nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+. "$HOME/.cargo/env"
+```
+
+#### source folder
 
 Add these to `~/.bash_source` folder
 
-git_prompt
+##### alias
+
+```bash
+# misc
+alias bash-reload="exec bash -l"
+
+# git
+alias g-amend-new="git add . $DEV_ENV_PATH; git commit --amend --no-edit; git push -f"
+alias g-amend-staged="git commit --amend --no-edit; git push -f"
+alias g-amend-updated="git add -u $DEV_ENV_PATH; git commit --amend --no-edit; git push -f"
+alias g-diff="git diff --name-only origin/master..."
+alias g-log="git log --pretty=oneline --abbrev-commit"
+alias g-rebase="git pull origin master --rebase"
+alias g-stage-new="git add . $DEV_ENV_PATH"
+alias g-stage-updated="git add -u $DEV_ENV_PATH"
+alias g-new-dry="git add . $DEV_ENV_PATH -n"
+
+# vscode
+alias code="/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code -r"
+
+# rust
+alias cargo_watch="cargo watch -c -x 'check --all-features --tests'"
+alias clippy="cargo clippy -- --deny warnings --no-deps"
+alias clippy_tests="cargo clippy -- --deny warnings --no-deps"
+```
+
+##### gitprompt
 
 ```bash
 # store colors
@@ -211,36 +267,6 @@ if [ -f $(brew --prefix)/etc/bash_completion.d/git-prompt.sh ]; then
   GIT_PS1_SHOWCOLORHINTS=true
   . $(brew --prefix)/etc/bash_completion.d/git-prompt.sh
 fi
-```
-
-### .bash_profile
-
-```bash
-# my bash_exec
-# export PATH="/Users/tanga/.bash_exec:$PATH"
-
-# source bash_source folder
-if [ -d ~/.bash_source ]; then
-    for file in ~/.bash_source/*; do
-        . "$file"
-    done
-fi
-
-# rbenv
-eval "$(rbenv init - bash)"
-
-# bash completion
-export BASH_COMPLETION_COMPAT_DIR="/usr/local/etc/bash_completion.d"
-[[ -r "/usr/local/etc/profile.d/bash_completion.sh" ]] && . "/usr/local/etc/profile.d/bash_completion.sh"
-
-# kubectl completion
-source <(kubectl completion bash)
-
-# nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-. "$HOME/.cargo/env"
 ```
 
 ### .bash_profile OLD
@@ -1096,6 +1122,15 @@ docker run \
   docker.io/library/gradle:jdk8 \
   /bin/bash
 
+# override entrypoint
+docker run \
+  -entrypoint /bin/bash \
+  docker.io/library/gradle:jdk8 \
+  --rm \
+  -it \
+  -u root \
+  -v `pwd`:/home/working \
+
 # with proxy variables
   --env HTTP_PROXY="localhost:3128" \
   --env HTTPS_PROXY="localhost:3128" \
@@ -1624,6 +1659,9 @@ Add andy-test namespace
 More information 1
 More information 2
 
+# skip pre commit hooks
+git commit --no-verify
+
 # tags
 git tag -l "v0.1"
 git tag "v0.2" -f
@@ -1782,6 +1820,18 @@ git reset origin/master --hard
 git pull
 ```
 
+## forks
+
+```bash
+# sync from upstream to local branch
+git checkout -b sync-fork-with-upstream
+git push -u origin sync-fork-with-upstream
+
+git remote add upstream https://github.com/user/repo.git
+git fetch upstream
+git merge upstream/master
+```
+
 ## log
 
 https://stackoverflow.com/questions/4479225/how-to-output-git-log-with-the-first-line-only
@@ -1805,6 +1855,8 @@ git am <patch_file>
 # create patch for staged but uncommited changes
 git diff --staged > mypatch.patch
 
+# create patch for diff between two commits (eg master)
+git diff master 596ab5736c3 > mypatch.patch
 ```
 
 ## prune local branches that are no longer in remote
@@ -2005,6 +2057,16 @@ git commit --amend --author="John Doe <john@doe.org>"
 git commit --amend --reset-author
 ```
 
+## show
+
+```bash
+# show commit previous to specific commit
+git show f48af22088f9fbdef5824e0bf55803073e386b1b^1
+
+# git log also works
+git log 051370102bcddbcb6e84a73d5a239bf593716ddb
+```
+
 ## tags
 
 https://devconnected.com/how-to-list-git-tags/
@@ -2030,6 +2092,10 @@ git tag -l "v0.1.*"
 # tag and push
 git tag staging-spinnaker-v0.11.1
 git push origin staging-spinnaker-v0.11.1
+
+# tag specific commit
+git tag v1.0.0 f4ba1fc
+git push origin --tags
 
 # show commit for tag
 git show <tag>
@@ -2992,11 +3058,63 @@ my_method(1, 2)
 
 # rust
 
+## \_running
+
+```bash
+# clear terminal console each run
+cargo watch -c
+
+# run for tests
+cargo watch -c -x 'check --all-features --tests'
+cargo check --all-features --tests
+
+# clippy for source code
+cargo clippy -- --deny warnings --no-deps
+
+# clippy for tests
+cargo clippy --tests -- --deny warnings
+
+# running tests
+cargo test --all-features -- --nocapture my_test
+cargo test --all-features my_test
+
+## enable println
+cargo test --features manual_tests -- --show-output my_test # show-output keeps stdout sequential
+cargo test --features manual_tests -- --nocapture my_test # nocapture interleaves stdout as tests run in parallel
+
+# enable logger
+See section below
+```
+
+## \_misc
+
 ```rust
-# return ok or error
-        return Ok(());
-        return Err(Error::NotImplementedError);
-        // return std::result::Result::Err(Error::NotImplementedError);
+// return ok or error
+return Ok(());
+return Err(Error::NotImplementedError);
+```
+
+## enable logger in tests
+
+Tests run in their own bubble, without any bootstrapping from `main.rs` or any
+other source code.
+
+Use this crate, which overrides the `[#test]` attribute to initialise a logger.
+
+```rust
+#[cfg(test)]
+use test_log::test;
+
+[#test]
+fn my_function() {
+  ...
+}
+```
+
+Then run using:
+
+```bash
+RUST_LOG=debug cargo test --features manual_tests -- --show-output my_test
 ```
 
 # spinnaker
@@ -3429,6 +3547,11 @@ https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby
 ```bash
 alias code="/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code -r"
 ```
+
+## 3 way merge
+
+`current` = `yours` = `ours` = remote branch (eg master)
+`incoming` = `theirs` = feature branch (eg your branch)
 
 # yamllint
 
