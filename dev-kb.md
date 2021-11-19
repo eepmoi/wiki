@@ -138,6 +138,137 @@ aws-curl --ec2-creds \
 aws ssm get-parameter --name "/core/v2/portfolio_facts" | jq -r '.Parameter.Value' | jq '.environment'
 ```
 
+## vpc endpoint
+
+**Regional endpoints**
+https://docs.aws.amazon.com/general/latest/gr/s3.html
+https://docs.aws.amazon.com/general/latest/gr/ecr.html
+
+**How to test**
+There is a difference to testing for gateway (eg s3) vs interface (eg ecr) endpoints.
+https://aws.amazon.com/premiumsupport/knowledge-center/vpc-fix-gateway-or-interface-endpoint/
+
+### Gateway Endpoints
+
+https://serverfault.com/a/989663
+Test using `traceroute` on an ec2 within the same region. Note need to use region in the URI
+
+```bash
+# with working vpc endpoint (no VPC IP as first hop ie not using NAT instance/gateway)
+sudo traceroute -n -T -p 443 s3-ap-southeast-2.amazonaws.com
+traceroute to s3-ap-southeast-2.amazonaws.com (52.95.134.47), 30 hops max, 60 byte packets
+ 1  * * *
+ 2  * * *
+ 3  * * *
+ 4  * * *
+ 5  * * *
+ 6  * * *
+ 7  * * *
+ 8  52.95.134.47  0.836 ms  0.820 ms  0.809 ms
+
+# no vpc endpoint, nothing setup for this region
+sudo traceroute -n -T -p 443 s3-ap-southeast-1.amazonaws.com
+traceroute to s3-ap-southeast-1.amazonaws.com (52.219.37.26), 30 hops max, 60 byte packets
+ 1  10.9.0.26  0.814 ms  0.813 ms  0.803 ms
+ 2  * * *
+ 3  * * *
+ 4  * * *
+ 5  * * *
+ 6  241.0.11.4  1.274 ms 241.0.11.6  1.274 ms 241.0.11.12  1.268 ms
+ 7  240.1.184.18  1.260 ms 240.1.184.20  1.282 ms 240.1.184.16  1.243 ms
+ 8  242.4.108.129  9.800 ms 242.4.109.129  9.789 ms 242.4.110.17  7.053 ms
+ 9  52.95.39.38  3.215 ms 52.95.38.211  10.860 ms  7.733 ms
+10  52.95.36.24  3.209 ms 52.95.39.19  2.547 ms 52.95.36.136  2.622 ms
+11  15.230.212.58  3.081 ms 15.230.212.60  2.529 ms 52.95.36.87  3.176 ms
+12  100.91.182.46  92.563 ms *  92.953 ms
+13  * * 52.93.8.172  94.247 ms
+14  * 150.222.108.67  96.350 ms *
+15  * * *
+16  * * *
+17  * * *
+18  * * *
+19  * * *
+20  * * *
+21  * * *
+22  52.219.37.26  92.635 ms  93.617 ms *
+```
+
+### Interface Endpoints
+
+Gotachas when setting up:
+
+- Add correct subnet, and security group allowing port 443 from subnet
+
+You can test whether you can connect to it quite easily by using telnet/curl on ec2:
+
+- within the same region
+- internet access disabled (use security group outbound rules to limit traffic
+  to 10.0.0.0/8)
+- curl/telnet using private IP of the ENI for the interface endpoint
+
+```bash
+curl -vvv 10.9.97.134:443
+* Rebuilt URL to: 10.9.97.134:443/
+*   Trying 10.9.97.134...
+* TCP_NODELAY set
+* Connected to 10.9.97.134 (10.9.97.134) port 443 (#0)
+> GET / HTTP/1.1
+> Host: 10.9.97.134:443
+> User-Agent: curl/7.58.0
+> Accept: */*
+>
+
+telnet 10.9.97.134 443
+Trying 10.9.97.134...
+Connected to 10.9.97.134.
+Escape character is '^]'.
+```
+
+It's actually quite hard to test that traffic is going via the interface endpoint.
+
+```bash
+# with interface endpoint, resolves to private IP
+nslookup api.ecr.ap-southeast-2.amazonaws.com
+Server: 127.0.0.53
+Address: 127.0.0.53#53
+
+Non-authoritative answer:
+Name: api.ecr.ap-southeast-2.amazonaws.com
+Address: 10.9.97.223
+
+ubuntu@ip-10-9-97-29:/stile/dev-environment$ nslookup dkr.ecr.ap-southeast-2.amazonaws.com
+Server: 127.0.0.53
+Address: 127.0.0.53#53
+
+Non-authoritative answer:
+Name: dkr.ecr.ap-southeast-2.amazonaws.com
+Address: 10.9.97.244
+
+# without interface endpoint, notice it api resolves to public IP
+ubuntu@ip-10-9-97-29:/stile/dev-environment$ nslookup api.ecr.ap-southeast-2.amazonaws.com
+Server: 127.0.0.53
+Address: 127.0.0.53#53
+
+Non-authoritative answer:
+api.ecr.ap-southeast-2.amazonaws.com canonical name = ecr.ap-southeast-2.amazonaws.com.
+Name: ecr.ap-southeast-2.amazonaws.com
+Address: 99.82.184.189
+
+# without interface endpoint, can't resolve dkr endpoint
+ubuntu@ip-10-9-97-29:/stile/dev-environment$ nslookup dkr.ecr.ap-southeast-2.amazonaws.com
+Server: 127.0.0.53
+Address: 127.0.0.53#53
+
+\*\* server can't find dkr.ecr.ap-southeast-2.amazonaws.com: NXDOMAIN
+```
+
+```bash
+# with working vpc endpoint (no VPC IP as first hop ie not using NAT instance/gateway)
+telnet ecr.ap-southeast-2.amazonaws.com 443
+telnet 10.9.97.134 443 443
+
+```
+
 # \_my bash setup.bash_profile
 
 ## pre req installs
@@ -157,10 +288,7 @@ brew install git
 ## .bash_profile
 
 ```bash
-# my bash_exec
-# export PATH="/Users/tanga/.bash_exec:$PATH"
-
-# source bash_source folder
+# load bash_source folder
 if [ -d ~/.bash_source ]; then
     for file in ~/.bash_source/*; do
         . "$file"
@@ -182,11 +310,23 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 . "$HOME/.cargo/env"
+
+# rust
+. "$HOME/.cargo/env"
+
 ```
+
+### scripts folder
+
+Add these to `~/.bash_scripts` folder
 
 ### source folder
 
 Add these to `~/.bash_source` folder
+
+#### tf-sort.sh
+
+https://github.com/libre-devops/utils/blob/dev/scripts/terraform/tf-sort.sh
 
 #### alias
 
@@ -204,6 +344,7 @@ alias g-rebase="git pull origin master --rebase"
 alias g-stage-new="git add . $DEV_ENV_PATH"
 alias g-stage-updated="git add -u $DEV_ENV_PATH"
 alias g-new-dry="git add . $DEV_ENV_PATH -n"
+alias g-stash="git stash save"
 
 # vscode
 alias code="/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code -r"
@@ -212,6 +353,11 @@ alias code="/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/co
 alias cargo_watch="cargo watch -c -x 'check --all-features --tests'"
 alias clippy="cargo clippy -- --deny warnings --no-deps"
 alias clippy_tests="cargo clippy --tests -- --deny warnings"
+
+# terraform
+alias terraform_fmt="terraform fmt -recursive"
+alias terraform_sort_var="~/.bash_scripts/tf-sort.sh variables.tf variables_sorted.tf"
+
 ```
 
 #### functions
@@ -415,21 +561,6 @@ printf "%s\n" "s/_TFE_HOSTNAME/$TFE_HOSTNAME/g" "s/_TFE_TOKEN/$TFE_TOKEN/g" > "$
 sed -f "$SEDSCRIPT" "$TF_CLI_CONFIG_FILE" > "$TF_BUILD_DIR/temp" && mv "$TF_BUILD_DIR/temp" "$TF_CLI_CONFIG_FILE"
 ```
 
-## compare files in two folders
-
-https://www.macworld.com/article/189460/termfoldercomp.html
-
-```bash
-# quick
-diff -rq cluster/twistlock-defender/prod cluster/twistlock-defender/twistlock-defender_np
-
-# line by line diff
-diff -r cluster/twistlock-defender/prod cluster/twistlock-defender/twistlock-defender_np
-
-# two files showing control chars
-diff file1 file2 | cat -t
-```
-
 ## copying hidden (dot) files
 
 Issue is they are not matched by \*, and also behaviour is different with MacOS
@@ -457,6 +588,21 @@ shopt -u dotglob
 
 ```bash
 echo "bnVsbA==" | base64 --decode
+```
+
+## diff
+
+https://www.macworld.com/article/189460/termfoldercomp.html
+
+```bash
+# quick two files/folder
+diff -rq cluster/twistlock-defender/prod cluster/twistlock-defender/twistlock-defender_np
+
+# line by line diff files/folders
+diff -r cluster/twistlock-defender/prod cluster/twistlock-defender/twistlock-defender_np
+
+# two files showing control chars
+diff file1 file2 | cat -t
 ```
 
 ## disk usage
@@ -489,17 +635,19 @@ Hello myusername
 
 ## find
 
-Modified log files
-
 ```bash
+# find modified log files
 cd /var/log
 sudo find . -type f -exec stat --format '%Y :%y %n' "{}" \; | sort -nr | cut -d: -f2- | head
-```
 
-Recursive find and delete files named xxx.txt
-
-```bash
+# recursive find and delete files named xxx.txt
 find . -name xxx.txt | xargs -I {} rm {}
+
+# find files with search word in current folder
+grep -rnw . -e "mongo.env"
+
+# find number of files with key word in current folder
+find . -type f -exec grep -i "mongo.env" {} + | wc -l
 ```
 
 ## functions
@@ -1081,6 +1229,7 @@ https://unix.stackexchange.com/questions/212894/whats-the-right-format-for-the-h
 # with alpaca/cntlm port forwarding to localhost:3128
 # run aws cli in a container
 docker run \
+  --pull=always \
   --rm \
   -it \
   --env HTTP_PROXY="http://host.docker.internal:3128" \
@@ -1090,6 +1239,7 @@ docker run \
   s3 ls --region ap-southeast-2
 
 docker run \
+  --pull=always \
   --rm \
   -it \
   --env HTTP_PROXY="http://192.168.65.1:3128" \
@@ -1100,6 +1250,7 @@ docker run \
 
 # run with volume mount (eg for dev container)
 docker run \
+  --pull=always \
   --rm \
   -it \
   -u root \
@@ -1107,14 +1258,16 @@ docker run \
   docker.io/library/gradle:jdk8 \
   /bin/bash
 
-# override entrypoint
+# override entrypoint (not needed if cmd is used in dockerfile)
 docker run \
+  --pull=always \
   -entrypoint /bin/bash \
-  docker.io/library/gradle:jdk8 \
   --rm \
   -it \
   -u root \
   -v `pwd`:/home/working \
+  docker.io/library/gradle:jdk8 \
+
 
 # with proxy variables
   --env HTTP_PROXY="localhost:3128" \
@@ -1122,6 +1275,7 @@ docker run \
 
 # using host network
 docker run \
+  --pull=always \
   --name tf-provider-github \
   -it \
   -u root \
@@ -1668,6 +1822,9 @@ git diff --name-only --cached
 git add --chmod=+x file.txt
 git add --chmod=-x file.txt
 git add . --chmod=+x -n
+
+# view git file permissions
+git ls-files -s
 ```
 
 ## blame
@@ -1874,6 +2031,13 @@ git rebase master
 # in one line
 git pull --rebase origin master
 
+# auto accept merge changes keeping remote branch
+git rebase --strategy recursive --strategy-option ours master
+
+# auto accept merge changes keeping current branch
+git rebase --strategy recursive --strategy-option theirs master
+
+# need to force push after rebase
 git push -f
 ```
 
@@ -2050,6 +2214,9 @@ git show f48af22088f9fbdef5824e0bf55803073e386b1b^1
 
 # git log also works
 git log 051370102bcddbcb6e84a73d5a239bf593716ddb
+
+# show next commit to specific commit
+git log --reverse --ancestry-path <commit-id>^..master
 ```
 
 ## tags
@@ -3043,6 +3210,8 @@ my_method(1, 2)
 
 # rust
 
+Lastest stable version here: https://github.com/rust-lang/rust/releases
+
 ## \_running
 
 ```bash
@@ -3067,8 +3236,20 @@ cargo test --all-features my_test
 cargo test --features manual_tests -- --show-output my_test # show-output keeps stdout sequential
 cargo test --features manual_tests -- --nocapture my_test # nocapture interleaves stdout as tests run in parallel
 
+# check installed toolchains
+rustup toolchain list
+rustup show
+
+# update rust to find out what latest stable version is
+rustup update
+> info: checking for self-updates
+>   stable-x86_64-apple-darwin updated - rustc 1.63.0 (4b91a6ea7 2022-08-08) (from rustc 1.62.1 (e092d0b6b 2022-07-16))
+>  nightly-x86_64-apple-darwin updated - rustc 1.65.0-nightly (060e47f74 2022-08-23) (from rustc 1.65.0-nightly (29e4a9ee0 2022-08-10))
+
 # enable logger
+
 See section below
+
 ```
 
 ## \_misc
@@ -3230,6 +3411,45 @@ terraform apply -no-color \
   -input=false \
   "${TF_VAR_xxx}_infra_destroy.tfplan"
 TF_DESTROY_APPLY_STATUS=$?
+```
+
+## \_state
+
+### remove resources
+
+```bash
+# remove single resource
+terrafom state rm -lock=false resource_type.resource_name
+
+# remove multiple resources
+terraform state rm -lock=false $(terraform state list | grep module.slb_scaling_group.aws_autoscaling_notification)
+```
+
+### replace provider
+
+To fix provider mismatches typically for version upgrades
+
+```bash
+- Failed to instantiate provider "registry.terraform.io/-/aws" to obtain
+schema: unknown provider "registry.terraform.io/-/aws"
+- Failed to instantiate provider "registry.terraform.io/-/local" to obtain
+schema: unknown provider "registry.terraform.io/-/local"
+- Failed to instantiate provider "registry.terraform.io/-/template" to obtain
+schema: unknown provider "registry.terraform.io/-/template"
+
+# fix, then delete lock file and run terraform init again
+terraform state replace-provider -auto-approve -lock=false registry.terraform.io/-/aws registry.terraform.io/hashicorp/aws
+terraform state replace-provider -auto-approve -lock=false registry.terraform.io/-/local registry.terraform.io/hashicorp/local
+terraform state replace-provider -auto-approve -lock=false registry.terraform.io/-/template registry.terraform.io/hashicorp/template
+```
+
+## \_validate fmt
+
+```terraform
+terraform validate
+
+terraform fmt -recursive -check
+terraform fmt -recursive
 ```
 
 ## backend cannot use variables
@@ -3413,12 +3633,26 @@ output "virtual_machines_directive" {
 
 # vim
 
+https://vim.rtorr.com/
+
+## search and replace
+
+```
+:%s/old/new/g
+```
+
 ## select all and delete
+
+```bash
+# for vi, select from line one to last line, and delete
+:1,$d
+```
 
 https://unix.stackexchange.com/questions/161821/how-can-i-delete-all-lines-in-a-file-using-vi
 
-```
-I always use ggVG
+```bash
+# This requires visual mode which vi doesn't have.
+# I always use ggVG
 gg jumps to the start of the current editing file
 V (capitalized v) will select the current line. In this case the first line of the current editing file
 G (capitalized g) will jump to the end of the file. In this case, since I selected the first line, G will select the whole text in this file.
@@ -3427,9 +3661,60 @@ Then you can simply press d or x to delete all the lines.
 
 # vscode
 
-## \_useful plugins
+## \_useful extensions
 
-General plugins without their own section below:
+```bash
+code --list-extensions
+alefragnani.Bookmarks
+bierner.markdown-mermaid
+castwide.solargraph
+chenzhe.split-line
+eamodio.gitlens
+emilast.LogFileHighlighter
+esbenp.prettier-vscode
+formulahendry.code-runner
+GitHub.github-vscode-theme
+golang.go
+googlecloudtools.cloudcode
+GrapeCity.gc-excelviewer
+gurumukhi.selected-lines-count
+hashicorp.terraform
+hbenl.vscode-test-explorer
+hoovercj.ruby-linter
+iciclesoft.workspacesort
+iliazeus.vscode-ansi
+kaiwood.endwise
+ms-azuretools.vscode-docker
+ms-kubernetes-tools.vscode-kubernetes-tools
+ms-python.python
+ms-python.vscode-pylance
+ms-vscode.hexeditor
+ms-vscode.test-adapter-converter
+naco-siren.gradle-language
+oderwat.indent-rainbow
+pdconsec.vscode-print
+rebornix.ruby
+redhat.vscode-commons
+redhat.vscode-yaml
+richie5um2.vscode-sort-json
+rust-lang.rust-analyzer
+rvest.vs-code-prettier-eslint
+ryanlaws.toggle-case
+sgoley.lookml-syntax-highlighter
+stkb.rewrap
+streetsidesoftware.code-spell-checker
+tamasfe.even-better-toml
+tsandall.opa
+vadimcn.vscode-lldb
+wingrunr21.vscode-ruby
+xaver.clang-format
+yzane.markdown-pdf
+yzhang.markdown-all-in-one
+zhuangtongfa.material-theme
+zxh404.vscode-proto3
+```
+
+General extensions without their own section below:
 
 - https://marketplace.visualstudio.com/items?itemName=chenzhe.split-line
 - https://marketplace.visualstudio.com/items?itemName=emilast.LogFileHighlighter
@@ -3504,12 +3789,6 @@ npm uninstall prettier @prettier/plugin-ruby
 npm install --save-dev prettier @prettier/plugin-ruby@2.1.0
 )
 
-function vscode_prettier_old {
-  cd ~/.vscode/extensions/esbenp.prettier-vscode-* # * to handle version bump
-  npm install --save-dev prettier @prettier/plugin-ruby
-  npm i # rebuild /node_modules
-}
-
 # add this to settings.json
 {
   "[ruby]": {
@@ -3547,6 +3826,25 @@ solargraph scan -v
 
 Install this plugin:
 https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby
+
+### terraform
+
+Use these settings to get formating working: https://github.com/hashicorp/vscode-terraform/blob/main/README.md#formatting
+
+```json
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file"
+  },
+  "[terraform-vars]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file"
+  },
+
+"terraform.languageServer.terraform.path": "/usr/local/bin/terraform",
+```
 
 ## open file with vscode in integrated terminal
 
