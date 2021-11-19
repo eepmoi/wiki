@@ -138,11 +138,9 @@ aws-curl --ec2-creds \
 aws ssm get-parameter --name "/core/v2/portfolio_facts" | jq -r '.Parameter.Value' | jq '.environment'
 ```
 
-# bash
+# \_my bash setup.bash_profile
 
-## \_my .bash_profile
-
-### pre req installs
+## pre req installs
 
 ```bash
 # upgrade bash
@@ -156,7 +154,7 @@ brew install bash-completion@2
 brew install git
 ```
 
-### .bash_profile
+## .bash_profile
 
 ```bash
 # my bash_exec
@@ -186,11 +184,11 @@ export NVM_DIR="$HOME/.nvm"
 . "$HOME/.cargo/env"
 ```
 
-#### source folder
+### source folder
 
 Add these to `~/.bash_source` folder
 
-##### alias
+#### alias
 
 ```bash
 # misc
@@ -213,10 +211,24 @@ alias code="/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/co
 # rust
 alias cargo_watch="cargo watch -c -x 'check --all-features --tests'"
 alias clippy="cargo clippy -- --deny warnings --no-deps"
-alias clippy_tests="cargo clippy -- --deny warnings --no-deps"
+alias clippy_tests="cargo clippy --tests -- --deny warnings"
 ```
 
-##### gitprompt
+#### functions
+
+```bash
+# git branch rename
+g-rename-branch() {
+  (
+    set -e
+    git branch -m $1 $2
+    git push -u origin $2
+    git push origin :$1
+  )
+}
+```
+
+#### gitprompt
 
 ```bash
 # store colors
@@ -269,95 +281,40 @@ if [ -f $(brew --prefix)/etc/bash_completion.d/git-prompt.sh ]; then
 fi
 ```
 
-### .bash_profile OLD
+#### path_env
 
 ```bash
-# my bash_exec
-export PATH="/Users/tanga/.bash_exec:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
-# source bash_functions
-if [ -d ~/.bash_functions ]; then
-    for file in ~/.bash_functions/*; do
-        . "$file"
-    done
-fi
+# psql
+export PATH="/usr/local/opt/libpq/bin:$PATH"
 
-# alpaca
-export http_proxy=localhost:3128
-export https_proxy=localhost:3128
-export PATH="$HOME/go/bin:$PATH"
-pgrep -q alpaca || nohup ~/go/bin/alpaca -d global -C http://proxy.com/gblproxy.pac &>/dev/null &
+# rust
+export PATH="$HOME/.cargo:$PATH"
 
-# aliases
-alias alpaca_on="launchctl load ~/Library/LaunchAgents/com.samuong.alpaca.plist"
-alias alpaca_off="launchctl unload ~/Library/LaunchAgents/com.samuong.alpaca.plist"
+# openjdk
+export PATH="/usr/local/opt/openjdk/bin:$PATH"
 
-# bash completion
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-. $(brew --prefix)/etc/bash_completion
-fi
-
-### git prompt
-
-# store colors
-MAGENTA="\[\033[0;35m\]"
-YELLOW="\[\033[01;33m\]"
-BLUE="\[\033[00;34m\]"
-LIGHT_GRAY="\[\033[0;37m\]"
-CYAN="\[\033[0;36m\]"
-GREEN="\[\033[00;32m\]"
-RED="\[\033[0;31m\]"
-VIOLET='\[\033[01;35m\]'
-WHITE='\[\033[00;37m\]'
-BLACK='\[\033[00;30m\]'
-
-function color_my_prompt {
-  local __user_and_host="$GREEN\u@\h"
-  local __cur_location="$MAGENTA\W"           # capital 'W': current directory, small 'w': full file path
-  local __git_branch_color="$GREEN"
-  local __prompt_tail="$VIOLET$"
-  local __user_input_color="$WHITE"
-  local __git_branch='$(__git_ps1)';
-
-  # colour branch name depending on state
-  if [[ "$(__git_ps1)" =~ "*" ]]; then     # if repository is dirty
-      __git_branch_color="$RED"
-  elif [[ "$(__git_ps1)" =~ "$" ]]; then   # if there is something stashed
-      __git_branch_color="$YELLOW"
-  elif [[ "$(__git_ps1)" =~ "%" ]]; then   # if there are only untracked files
-      __git_branch_color="$LIGHT_GRAY"
-  elif [[ "$(__git_ps1)" =~ "+" ]]; then   # if there are staged files
-      __git_branch_color="$CYAN"
-  fi
-
-  # Build the PS1 (Prompt String)
-#  PS1="$__user_and_host $__cur_location$__git_branch_color$__git_branch $__prompt_tail$__user_input_color "
-  PS1="\D{%F %T} $__user_and_host $__cur_location$__git_branch_color$__git_branch $__prompt_tail$__user_input_color \n"
-}
-
-# configure PROMPT_COMMAND which is executed each time before PS1
-export PROMPT_COMMAND=color_my_prompt
-
-# if .git-prompt.sh exists, set options and execute it
-if [ -f ~/.git-prompt.sh ]; then
-  GIT_PS1_SHOWDIRTYSTATE=true
-  GIT_PS1_SHOWSTASHSTATE=true
-  GIT_PS1_SHOWUNTRACKEDFILES=true
-  GIT_PS1_SHOWUPSTREAM="auto"
-  GIT_PS1_HIDE_IF_PWD_IGNORED=true
-  GIT_PS1_SHOWCOLORHINTS=true
-  . ~/.git-prompt.sh
-fi
-
-test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
-
-# gcloud
-source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.bash.inc'
-source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc'
-
-# kubectl completion support
-source <(kubectl completion bash)
+# mysql-client
+export PATH="/usr/local/opt/mysql-client/bin:$PATH"
 ```
+
+#### vscode_prettier
+
+```bash
+function vscode_prettier (
+cd ~/node_modules
+npm uninstall prettier @prettier/plugin-ruby
+npm install --save-dev prettier @prettier/plugin-ruby@2.1.0
+)
+
+function ruby_prettier (
+  current_dir=$PWD
+  cd ~ &&  ./node_modules/.bin/prettier --write "$current_dir/*.rb" "$current_dir/Rakefile"
+)
+```
+
+# bash
 
 ## arrays and looping
 
@@ -530,11 +487,39 @@ echo 'Hello $USER' | envsubst
 Hello myusername
 ```
 
-## find modified log files
+## find
+
+Modified log files
 
 ```bash
 cd /var/log
 sudo find . -type f -exec stat --format '%Y :%y %n' "{}" \; | sort -nr | cut -d: -f2- | head
+```
+
+Recursive find and delete files named xxx.txt
+
+```bash
+find . -name xxx.txt | xargs -I {} rm {}
+```
+
+## functions
+
+Changing folders in function {} vs ()
+
+```bash
+# this will change the current terminal session's folder
+function vscode_prettier {
+cd ~/node_modules
+npm uninstall prettier @prettier/plugin-ruby
+npm install --save-dev prettier @prettier/plugin-ruby@2.1.0
+}
+
+# this will not
+function vscode_prettier (
+cd ~/node_modules
+npm uninstall prettier @prettier/plugin-ruby
+npm install --save-dev prettier @prettier/plugin-ruby@2.1.0
+)
 ```
 
 ## macos get ip addresses
@@ -3264,6 +3249,16 @@ https://archive.sweetops.com/terraform/2019/03/
 ```terraform
 # https://stackoverflow.com/a/67871267 - list of strings vs list of objects
 
+Using for_each and a list of strings is the easiest to understand, you can
+always use the toset() function. When working with a list of objects you need
+to convert it to a map where the key is a unique value. The  alternative is to
+put a map inside your Terraform configuration. Personally, I think it looks
+cleaner to have a list of objects instead of a map in your configuration. The
+key usually doesn't have a purpose other than to identify unique items in a
+map, which can thus be constructed dynamically. I also use iterators to
+conditionally deploy a resource or resource block, especially when
+constructing more complex modules.
+
 List of strings:
 
 locals {
@@ -3493,16 +3488,27 @@ It's a wrapper on `ruby -wc`
 
 #### prettier formatting
 
+**NOTE** no longer working with prettier ruby npm v3.1.2, need to use v2.1
+https://github.com/prettier/plugin-ruby/issues/1228#issuecomment-1126624875
+
 https://github.com/prettier/plugin-ruby#usage-with-an-editor
 https://github.com/prettier/plugin-ruby/issues/113#issuecomment-783426539
 
-```
-gem install prettier
+Reload vscode after npm installs
 
-# need to install ruby plugin in vscode extensions folder then run "npm i"
-cd ~/.vscode/extensions/esbenp.prettier-vscode-9.0.0
-npm install --save-dev prettier @prettier/plugin-ruby
-npm i # rebuild /node_modules
+```
+# need to install npm ruby plugin in node_modules folder
+function vscode_prettier (
+cd ~/node_modules
+npm uninstall prettier @prettier/plugin-ruby
+npm install --save-dev prettier @prettier/plugin-ruby@2.1.0
+)
+
+function vscode_prettier_old {
+  cd ~/.vscode/extensions/esbenp.prettier-vscode-* # * to handle version bump
+  npm install --save-dev prettier @prettier/plugin-ruby
+  npm i # rebuild /node_modules
+}
 
 # add this to settings.json
 {
