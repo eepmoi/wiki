@@ -667,6 +667,13 @@ pgrep -q <command> || nohup <command> &>/dev/null &
 nohup <command> &>/dev/null &
 ```
 
+## set
+
+```bash
+# https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html
+set -Eeuo pipefail
+```
+
 ## sudo login options
 
 https://askubuntu.com/a/376386
@@ -2674,6 +2681,14 @@ jsonnet -e 'std.length((import "launchpad.jsonnet").sync)'
 
 # macos
 
+## \_stuff to install
+
+```bash
+# https://alt-tab-macos.netlify.app/
+brew install alt-tab
+
+```
+
 ## rotate log files
 
 https://www.richard-purves.com/2017/11/08/log-rotation-mac-admin-cheats-guide/
@@ -2953,6 +2968,49 @@ Potential workaround using TF_CLI_ARGS
 https://www.terraform.io/docs/commands/environment-variables.html#tf_cli_args-and-tf_cli_args_name
 
 https://archive.sweetops.com/terraform/2019/03/
+
+## for_each
+
+```terraform
+# https://stackoverflow.com/a/67871267 - list of strings vs list of objects
+
+List of strings:
+
+locals {
+  ip_addresses = ["10.0.0.1", "10.0.0.2"]
+}
+
+resource "example" "example" {
+  for_each   = toset(local.ip_addresses)
+  ip_address = each.key
+}
+List of objects:
+
+locals {
+  virtual_machines = [
+    {
+      ip_address = "10.0.0.1"
+      name       = "vm-1"
+    },
+    {
+      ip_address = "10.0.0.1"
+      name       = "vm-1"
+    }
+  ]
+}
+
+resource "example" "example" {
+  for_each   = {
+    for index, vm in local.virtual_machines:
+    index => vm
+    # OR: vm.name => vm (not always unique if names are the same)
+    # OR: sha1(vm.name) vm => (not always unique if names are the same)
+    # NOT: uuid() => vm (gets recreated everytime)
+  }
+  name       = each.value.name
+  ip_address = each.value.ip_address
+}
+```
 
 ## list vs map vs set
 
