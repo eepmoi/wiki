@@ -907,6 +907,8 @@ openssl s_client -CAfile ~/Documents/work/certs/root_certs.pem -showcerts -conne
 
 ## macos
 
+### \_misc
+
 ```bash
 # extract cert from keychain
 security find-certificate -p -c "Custom Global Root CA v2"
@@ -915,12 +917,22 @@ security find-certificate -p -c "Custom Global Root CA v2"
 sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain <certificate>
 ```
 
+### generating keys
+
+```bash
+# ssh key - note different to private key
+ssh-keygen -t rsa -b 4096 -f fake_dev_key.pem
+
+# rsa private key
+openssl genrsa -out fake_dev_key.pem 2048
+openssl rsa -in fake_dev_key.pem -text -inform PEM -noout # verify
+```
+
 # curl
 
 ## general
 
 ```bash
-
 # loop and test for timeout
 for i in {1..9}; do curl --retry 0 --connect-timeout 3 -m 3 -kv --noproxy "*" https://sts.ap-southeast-2.amazonaws.com/&>/dev/null; echo $?; done
 
@@ -929,8 +941,6 @@ curl -vvv --noproxy "*" --cacert eks-example.crt --resolve nginx.eks-example.com
 
 # smtp
 curl -v --ssl smtp://xx.xxx.xxx.xxx:587
-
-
 ```
 
 ## with response time
@@ -1635,6 +1645,16 @@ git diff --name-only --cached
 git add --chmod=+x file.txt
 git add --chmod=-x file.txt
 git add . --chmod=+x -n
+```
+
+## blame
+
+https://www.moxio.com/blog/43/ignoring-bulk-change-commits-with-git-blame
+
+Add list of commits to a `.git-blame-ignore-revs` file and then add to git config.
+
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
 ```
 
 ## checkout PRs locally
@@ -2968,6 +2988,15 @@ def my_method(arg1, arg2)
 end
 
 my_method(1, 2)
+```
+
+# rust
+
+```rust
+# return ok or error
+        return Ok(());
+        return Err(Error::NotImplementedError);
+        // return std::result::Result::Err(Error::NotImplementedError);
 ```
 
 # spinnaker
