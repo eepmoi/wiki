@@ -33,11 +33,14 @@ Setup Chrome icon - here are the steps:
 open -a "Google Chrome" --args --proxy-server=localhost:3128
 ```
 
-- Save, and it will now appear as an icon under `Applications` in Finder. Can create alias for desktop.
+- Save, and it will now appear as an icon under `Applications` in Finder. Can
+  create alias for desktop.
 
-Derived from this: https://apple.stackexchange.com/questions/115114/how-to-put-a-custom-launcher-in-the-dock-mavericks
+Derived from this:
+https://apple.stackexchange.com/questions/115114/how-to-put-a-custom-launcher-in-the-dock-mavericks
 
-- To change icon, follow instructions here: https://discussions.apple.com/thread/5749045
+- To change icon, follow instructions here:
+  https://discussions.apple.com/thread/5749045
 
 ## upgrade alpaca
 
@@ -49,13 +52,17 @@ cd ~/go/src/github.com/samuong/alpaca; git pull origin master; go build .; mv al
 
 ## cloud-init
 
-Workaround user data > 16k by using S3: https://aws.plainenglish.io/a-workaround-for-the-16k-characters-limit-for-ec2s-user-data-terraform-solution-2ff7b4e6a43a
+Workaround user data > 16k by using S3:
+https://aws.plainenglish.io/a-workaround-for-the-16k-characters-limit-for-ec2s-user-data-terraform-solution-2ff7b4e6a43a
 
-Using #include file: https://jasonbutz.info/2017/08/cloud-init-user-data-include-file-format
+Using #include file:
+https://jasonbutz.info/2017/08/cloud-init-user-data-include-file-format
 
-Note #include runs first so cannot have script run beforehand (eg to copy user data MIME file from S3)
+Note #include runs first so cannot have script run beforehand (eg to copy user
+data MIME file from S3)
 
-MIME example and execution order: https://github.com/ukayani/cloud-init-example/blob/master/README.md
+MIME example and execution order:
+https://github.com/ukayani/cloud-init-example/blob/master/README.md
 
 cloud-init file types: https://help.ubuntu.com/community/CloudInit
 
@@ -436,7 +443,8 @@ diff file1 file2 | cat -t
 
 ## copying hidden (dot) files
 
-Issue is they are not matched by \*, and also behaviour is different with MacOS and Linux
+Issue is they are not matched by \*, and also behaviour is different with MacOS
+and Linux
 
 https://jondavidjohn.com/linux-vs-osx-the-cp-command/
 
@@ -466,11 +474,14 @@ echo "bnVsbA==" | base64 --decode
 
 https://unix.stackexchange.com/questions/492772/replace-environment-variables-in-text-if-they-exist
 
-Replaces variables in input. Not sure why you wouldn't just use echo, perhaps used for in files
+Replaces variables in input. Not sure why you wouldn't just use echo, perhaps
+used for in files
 
 Can be used in files: https://mywiki.wooledge.org/TemplateFiles
 
-Also useful for cat for paths: cat ./kube-system/$CLUSTER_VERSION/cluster-autoscaler.yaml | envsubst | kubectl apply -f -
+Also useful for cat for paths: cat
+./kube-system/$CLUSTER_VERSION/cluster-autoscaler.yaml | envsubst | kubectl
+apply -f -
 
 ```bash
 echo 'Hello $USER' | envsubst
@@ -988,11 +999,13 @@ docker build \
 
 Docker internal VM and proxy, find out docker internal VM's IP
 
-https://www.manthanhd.com/2017/01/19/setting-up-corporate-proxy-on-docker-for-mac/ https://docs.docker.com/docker-for-mac/networking/#use-cases-and-workarounds
+https://www.manthanhd.com/2017/01/19/setting-up-corporate-proxy-on-docker-for-mac/
+https://docs.docker.com/docker-for-mac/networking/#use-cases-and-workarounds
 
 Lower (http/s) vs uppercase (HTTP/S) variables
 
-https://docs.docker.com/config/daemon/systemd/#httphttps-proxy https://unix.stackexchange.com/questions/212894/whats-the-right-format-for-the-http-proxy-environment-variable-caps-or-no-ca#:~:text=http_proxy%20and%20friends%20isn't,and%20no_proxy%20are%20commonly%20lowercase
+https://docs.docker.com/config/daemon/systemd/#httphttps-proxy
+https://unix.stackexchange.com/questions/212894/whats-the-right-format-for-the-http-proxy-environment-variable-caps-or-no-ca#:~:text=http_proxy%20and%20friends%20isn't,and%20no_proxy%20are%20commonly%20lowercase
 
 ```bash
 # with alpaca/cntlm port forwarding to localhost:3128
@@ -1119,7 +1132,7 @@ docker save -o haproxy:git-8a23df32d7e49ab28736df12d48788c7a793c49c.tar 42626703
 docker import haproxy:git-8a23df32d7e49ab28736df12d48788c7a793c49c.tar esedocker-build.artifactory.dss.ext.national.com.au/haproxy:git-8a23df32d7e49ab28736df12d48788c7a793c49c
 ```
 
-# ps
+## ps
 
 ```bash
 # show all images including stopped
@@ -1186,10 +1199,14 @@ docker rmi $(docker images -f “dangling=true” -q)
 # remove all stopped containers
 docker rm $(docker ps -a -q)
 
-# Delete all containers
+# delete all containers
 docker rm $(docker ps -a -q)
-# Delete all images
+
+# delete all images
 docker rmi $(docker images -q)
+
+# delete all images by name
+docker rmi $(docker images | grep myimagename | tr -s ' ' | cut -d ' ' -f 3)
 ```
 
 ## rm prev containers
@@ -1218,9 +1235,14 @@ docker run --rm <image> env
 
 https://stackoverflow.com/questions/34782678/difference-between-running-and-starting-a-docker-container
 
-Run: create a new container of image and execute the container, you can create N clones of the same image. Command is docker run IMAGE_ID and not docker run CONTAINER_ID
+Run: create a new container of image and execute the container, you can create N
+clones of the same image. Command is docker run IMAGE_ID and not docker run
+CONTAINER_ID
 
-Start: Launch a container previously stopped, for example if you had stopped a database with the command docker stop CONTAINER_ID, you can relaunch the same container with the command docker start CONTAINER_ID and the data and settings are the same.
+Start: Launch a container previously stopped, for example if you had stopped a
+database with the command docker stop CONTAINER_ID, you can relaunch the same
+container with the command docker start CONTAINER_ID and the data and settings
+are the same.
 
 ## view env vars of image
 
@@ -1384,7 +1406,8 @@ gcloud config unset core/custom_ca_certs_file
 
 ## networking
 
-Setting up a GKE cluster requires all 4 ranges defined below (GCP conventions for names). All visible in GKE console except Primary - defined in Terraform
+Setting up a GKE cluster requires all 4 ranges defined below (GCP conventions
+for names). All visible in GKE console except Primary - defined in Terraform
 
 - Master - Master address range (allocated by cloud services for GKE master)
 - Primary - Nodes and LBs (not visible in GKE console)
@@ -1546,7 +1569,7 @@ https://gist.github.com/piscisaureus/3342247
 ```bash
 # add 'fetch = +refs/pull/*/head:refs/remotes/origin/pr/*' to .git/config as per below
 [remote "origin"]
-	url = git@github.service.anz:ex/gitsync-config.git
+	url = git@github.com/xxx.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 	fetch = +refs/pull/*/head:refs/remotes/origin/pr/*
 
@@ -1563,6 +1586,16 @@ git cherry-pick 3cf974a33aa85e4b25278d02a3dd9452ec827e74
 # without commit
 git cherry-pick -n 3cf974a33aa85e4b25278d02a3dd9452ec827e74
 git reset # unstage changes
+```
+
+## clean
+
+https://stackoverflow.com/a/1090316
+
+```bash
+git clean -f -d # remove untracked
+git clean -f -x -d # CAUTION: as above but removes ignored files like config.
+git clean -fxd :/ # CAUTION: as above, but cleans untracked and ignored files through the entire repo (without :/, the operation affects only the current directory)
 ```
 
 ## clone add, commit, push
@@ -1674,13 +1707,17 @@ git format-patch -1 <commit_sha>
 # apply patch
 git am <patch_file>
 
+# create patch for staged but uncommited changes
+git diff --staged > mypatch.patch
+
 ```
 
 ## prune local branches that are no longer in remote
 
 ## prune local branches that are no longer in remote
 
-git prune explained: https://stackoverflow.com/questions/20106712/what-are-the-differences-between-git-remote-prune-git-prune-git-fetch-prune/20107184
+git prune explained:
+https://stackoverflow.com/questions/20106712/what-are-the-differences-between-git-remote-prune-git-prune-git-fetch-prune/20107184
 
 ```bash
 # branches with no upstream
@@ -1710,7 +1747,9 @@ https://www.internalpointers.com/post/squash-commits-into-one-git
 
 https://stackoverflow.com/questions/47888343/how-to-squash-a-merge-commit-with-a-normal-commit
 
-**NOTE** - this will not pickup merge commits (eg pull master). To do this cleanly, push merge commit upstream first, then do a normal rebase without -i. It should auto squash the merge commit.
+**NOTE** - this will not pickup merge commits (eg pull master). To do this
+cleanly, push merge commit upstream first, then do a normal rebase without -i.
+It should auto squash the merge commit.
 
 ```bash
 git rebase -i <commit you want to amend>^
@@ -1750,7 +1789,8 @@ git rebase -i <commit you want to amend>^ # notice the ^ so you see the said com
   pick e23d23a fix indentation of jgroups.xml
 ```
 
-- now to combine e23d23a with 8c83e24 you can change line order and use squash like this:
+- now to combine e23d23a with 8c83e24 you can change line order and use squash
+  like this:
 
 ```bash
   pick 8c83e24 use substitution instead of separate subsystems file to avoid jgroups.xml and jgroups-e2.xml going out of sync
@@ -1758,7 +1798,8 @@ git rebase -i <commit you want to amend>^ # notice the ^ so you see the said com
   pick 799ce28 generate ec2 configuration out of subsystems-ha.xml and subsystems-full-ha.xml to avoid discrepancies
 ```
 
-- write and exit the file, you will be present with an editor to merge the commit messages. Do so and save/exit the text document
+- write and exit the file, you will be present with an editor to merge the
+  commit messages. Do so and save/exit the text document
 
 - you are done, your commits are amended
 
@@ -1802,7 +1843,8 @@ git branch branch_name -u your_new_remote/branch_name
 
 ## revert
 
-https://stackoverflow.com/a/1470452 Revert a prev commit with a new commit that reverses the changes
+https://stackoverflow.com/a/1470452 Revert a prev commit with a new commit that
+reverses the changes
 
 ```bash
 # multiple commits
@@ -2517,7 +2559,8 @@ kubectl cp artifactory/artifactory-artifactory-ha-primary-0:/var/opt/jfrog/artif
 
 https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/
 
-Used to forward requests from local host to pod, very useful for testing. Eg curl post to pod when pod doesn't have curl installed
+Used to forward requests from local host to pod, very useful for testing. Eg
+curl post to pod when pod doesn't have curl installed
 
 ```bash
 # get service ports
@@ -2829,6 +2872,21 @@ for (sort @chapters) {
 
 https://github.com/Logan-Lin/SortMarkdown
 
+# ruby
+
+```ruby
+# print method variables and values
+# https://stackoverflow.com/a/47203042
+def my_method(arg1, arg2)
+  var = arg2
+  p binding.local_variables #=> [:arg1, :arg2, :var]
+  p binding.local_variable_get(:arg1) #=> 1
+  p Hash[binding.local_variables.map { |x| [x, binding.local_variable_get(x)] }] #=> {:arg1 => 1, :arg2 => 2, :var => 2}
+end
+
+my_method(1, 2)
+```
+
 # spinnaker
 
 ## get halyard config
@@ -2860,7 +2918,8 @@ index=_internal [| gentimes start=-1 | eval earliest=strptime("3/25/20 9:17:00.0
 
 - Click on time stamp
 
-- Apply time filter - this will add filter to the "Date time range" in top right corner
+- Apply time filter - this will add filter to the "Date time range" in top right
+  corner
 
 - Remove search strings to expand results.
 
@@ -3050,17 +3109,25 @@ maps = key value pairs, un-ordered
 
 sets = values only, no key or index
 
-What lists, maps, and sets have in common is that they are all collections of values where all the values have the same type.
+What lists, maps, and sets have in common is that they are all collections of
+values where all the values have the same type.
 
-Lists are collections where those values are defined in a particular order and assigned numeric indices starting at zero, so we can say that each value is identified by a number.
+Lists are collections where those values are defined in a particular order and
+assigned numeric indices starting at zero, so we can say that each value is
+identified by a number.
 
-Maps are collections where those values are not in a particular order but are each assigned a key string. We can therefore say that each value is identified by a string.
+Maps are collections where those values are not in a particular order but are
+each assigned a key string. We can therefore say that each value is identified
+by a string.
 
-Sets are, similar to maps, collections where the values are in no particular order, but unlike maps the values are not assigned a key string. Instead, the values identify themselves.
+Sets are, similar to maps, collections where the values are in no particular
+order, but unlike maps the values are not assigned a key string. Instead, the
+values identify themselves.
 
 ## merge lists/tuples
 
-https://stackoverflow.com/a/59323727 https://github.com/hashicorp/terraform/issues/23284#issuecomment-550039034
+https://stackoverflow.com/a/59323727
+https://github.com/hashicorp/terraform/issues/23284#issuecomment-550039034
 
 ```terraform
 metadata = merge(var.services_and_metadata[*].metadata...)
@@ -3132,6 +3199,67 @@ V (capitalized v) will select the current line. In this case the first line of t
 G (capitalized g) will jump to the end of the file. In this case, since I selected the first line, G will select the whole text in this file.
 Then you can simply press d or x to delete all the lines.
 ```
+
+# vscode
+
+## open file with vscode in integrated terminal
+
+```bash
+alias code="/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code -r"
+```
+
+## ruby
+
+### execute code
+
+Install this plugin:
+https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner
+
+### linting
+
+Install this plugin: https://marketplace.visualstudio.com/items?itemName=hoovercj.ruby-linter
+
+It's a wrapper on `ruby -wc`
+
+### prettier formatting
+
+https://github.com/prettier/plugin-ruby#usage-with-an-editor
+https://github.com/prettier/plugin-ruby/issues/113#issuecomment-783426539
+
+```
+gem install prettier
+
+# need to install ruby plugin in vscode extensions folder then run "npm i"
+cd ~/.vscode/extensions/esbenp.prettier-vscode-9.0.0
+npm install --save-dev prettier @prettier/plugin-ruby
+npm i # rebuild /node_modules
+
+# add this to settings.json
+{
+  "[ruby]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  }
+}
+```
+
+### syntax higlighting
+
+Install this plugin: https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby
+
+## prettier
+
+Note vscode plugin settings will not be used if there is a local config file.
+
+```
+["INFO" - 2:07:30 PM] Detected local configuration (i.e. .prettierrc or .editorconfig), VS Code configuration will not be used
+```
+
+### markdown
+
+Hard wrap lines https://stackoverflow.com/a/64285108
+Settings -> Prettier:Print
+Width -> Prose Wrap: preserve
 
 # yamllint
 
