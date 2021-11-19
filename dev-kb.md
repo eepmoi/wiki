@@ -1578,6 +1578,7 @@ git commit -m "Add more dev tool installs."
 git commit -m "Update onboarding steps"
 
 git commit --amend --no-edit
+git commit --reuse-message=HEAD
 
 git add -u ; git commit --amend --no-edit; git push -f
 git add . ; git commit --amend --no-edit; git push -f
@@ -3010,6 +3011,33 @@ resource "example" "example" {
   name       = each.value.name
   ip_address = each.value.ip_address
 }
+
+# advanced example
+resource "aws_acm_certificate" "cert" {
+  domain_name       = var.domain
+  validation_method = "DNS"
+  depends_on        = [aws_route53_record.caa]
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_route53_record" "validation-record" {
+  for_each = {
+    for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+  name    = each.value.name
+  records = [each.value.record]
+  ttl     = 60
+  type    = each.value.type
+
+  zone_id         = var.aws_route53_zone_id
+  allow_overwrite = true
+}
 ```
 
 ## list vs map vs set
@@ -3030,9 +3058,66 @@ Maps are collections where those values are not in a particular order but are ea
 
 Sets are, similar to maps, collections where the values are in no particular order, but unlike maps the values are not assigned a key string. Instead, the values identify themselves.
 
+## merge lists/tuples
+
+https://stackoverflow.com/a/59323727 https://github.com/hashicorp/terraform/issues/23284#issuecomment-550039034
+
+```terraform
+metadata = merge(var.services_and_metadata[*].metadata...)
+
+policy_names_to_arns = merge(
+  [for policies in var.components[*].policies :
+    { for policy in policies :
+      policy.name => policy.arn
+    }
+  ]...
+)
+
+security_group_ids = concat(
+  [aws_security_group.base.id],
+  var.components[*].security_group_ids...
+)
+```
+
 ## plan visualizer
 
 https://github.com/im2nguyen/rover
+
+## string template directives
+
+https://www.terraform.io/docs/language/expressions/strings.html#directives
+
+```terraform
+# check if list is empty - use length
+# https://github.com/hashicorp/terraform/issues/23562
+
+virtual_machines = [
+  {
+    ip_address = "10.0.0.1"
+    name       = "vm-1"
+  },
+  {
+    ip_address = "10.0.0.1"
+    name       = "vm-1"
+  }
+]
+
+virtual_machines_empty = []
+
+output "virtual_machines" {
+  value = local.virtual_machines
+}
+
+output "virtual_machines_length" {
+  # value = length(local.virtual_machines)
+  value = length(local.virtual_machines_empty)
+}
+
+output "virtual_machines_directive" {
+  # value = "%{if length(local.virtual_machines_empty) != 0}not empty%{else}empty%{endif}"
+  value = "%{if length(local.virtual_machines) != 0}not empty%{else}empty%{endif}"
+}
+```
 
 # vim
 
