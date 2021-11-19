@@ -50,6 +50,12 @@ cd ~/go/src/github.com/samuong/alpaca; git pull origin master; go build .; mv al
 
 # aws
 
+## assume role bash
+
+```bash
+unset AWS_ACCESS_KEY_ID ; $(aws sts assume-role --role-arn arn:aws:iam::123456789011:role/name --role-session-name "name" | tr -d ',' | awk '/SecretAccessKey/ { system("echo export AWS_SECRET_ACCESS_KEY="$2) }; /SessionToken/ { system("echo export AWS_SECURITY_TOKEN="$2) } ; /AccessKeyId/ { system("echo export AWS_ACCESS_KEY_ID="$2) }')
+```
+
 ## cloud-init
 
 Workaround user data > 16k by using S3:
@@ -2875,12 +2881,16 @@ https://github.com/Logan-Lin/SortMarkdown
 # ruby
 
 ```ruby
-# print method variables and values
+# print method name, variables and values
 # https://stackoverflow.com/a/47203042
+# https://stackoverflow.com/a/199560
+
 def my_method(arg1, arg2)
   var = arg2
   p binding.local_variables #=> [:arg1, :arg2, :var]
   p binding.local_variable_get(:arg1) #=> 1
+  p __method__.to_s # string
+  p __method__ # symbol
   p Hash[binding.local_variables.map { |x| [x, binding.local_variable_get(x)] }] #=> {:arg1 => 1, :arg2 => 2, :var => 2}
 end
 
@@ -3202,26 +3212,63 @@ Then you can simply press d or x to delete all the lines.
 
 # vscode
 
-## open file with vscode in integrated terminal
+## \_useful plugins
+
+General plugins without their own section below:
+https://marketplace.visualstudio.com/items?itemName=chenzhe.split-line
+https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner
+https://marketplace.visualstudio.com/items?itemName=GitHub.github-vscode-theme
+https://marketplace.visualstudio.com/items?itemName=GrapeCity.gc-excelviewer
+https://marketplace.visualstudio.com/items?itemName=GrapeCity.gc-excelviewer
+https://marketplace.visualstudio.com/items?itemName=gurumukhi.selected-lines-count
+https://marketplace.visualstudio.com/items?itemName=hoovercj.ruby-linter
+https://marketplace.visualstudio.com/items?itemName=iciclesoft.workspacesort
+https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow
+https://marketplace.visualstudio.com/items?itemName=pdconsec.vscode-print
+https://marketplace.visualstudio.com/items?itemName=richie5um2.vscode-sort-json
+https://marketplace.visualstudio.com/items?itemName=ryanlaws.toggle-case
+https://marketplace.visualstudio.com/items?itemName=sgoley.lookml-syntax-highlighter
+https://marketplace.visualstudio.com/items?itemName=stkb.rewrap
+https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker
+https://marketplace.visualstudio.com/items?itemName=yzane.markdown-pdf
+https://marketplace.visualstudio.com/items?itemName=zhuangtongfa.Material-theme
+
+### prettier
+
+https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode
+
+Note vscode plugin settings will not be used if there is a local config file.
 
 ```bash
-alias code="/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code -r"
+["INFO" - 2:07:30 PM] Detected local configuration (i.e. .prettierrc or .editorconfig), VS Code configuration will not be used
 ```
 
-## ruby
+#### markdown
 
-### execute code
+Hard wrap lines https://stackoverflow.com/a/64285108 Settings -> Prettier:Print
+Width -> Prose Wrap: preserve
+
+Note if this is not working check whether there is a local prettier config file
+overriding vscode settings:
+
+### ruby
+
+Install this plugin:
+https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby
+
+#### execute code
 
 Install this plugin:
 https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner
 
-### linting
+#### linting
 
-Install this plugin: https://marketplace.visualstudio.com/items?itemName=hoovercj.ruby-linter
+Install this plugin:
+https://marketplace.visualstudio.com/items?itemName=hoovercj.ruby-linter
 
 It's a wrapper on `ruby -wc`
 
-### prettier formatting
+#### prettier formatting
 
 https://github.com/prettier/plugin-ruby#usage-with-an-editor
 https://github.com/prettier/plugin-ruby/issues/113#issuecomment-783426539
@@ -3243,23 +3290,40 @@ npm i # rebuild /node_modules
 }
 ```
 
+#### solargraph
+
+https://marketplace.visualstudio.com/items?itemName=castwide.solargraph
+
+This plugin provides intellisense and also some limited "find references" for
+definition of variables/methods. It works in conjunction with rebornix.Ruby
+plugin, just need to disable intellisense on that side.
+
+Manual steps:
+
+```bash
+gem install solagraph # do this in git folder, then add absolute path to settings
+
+# https://solargraph.org/guides/scanning-workspaces
+# scan workspace (ie git folder) to allow "cmd hover" drilldown to work
+solargraph scan -v
+
+# add this to settings.json
+{
+  "ruby.useLanguageServer": false, // disable rebonix.ruby plugin language server
+  "solargraph.commandPath": "/Users/andytang/.rbenv/shims/solargraph" // add absolute path of gem install above
+}
+```
+
 ### syntax higlighting
 
-Install this plugin: https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby
+Install this plugin:
+https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby
 
-## prettier
+## open file with vscode in integrated terminal
 
-Note vscode plugin settings will not be used if there is a local config file.
-
+```bash
+alias code="/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code -r"
 ```
-["INFO" - 2:07:30 PM] Detected local configuration (i.e. .prettierrc or .editorconfig), VS Code configuration will not be used
-```
-
-### markdown
-
-Hard wrap lines https://stackoverflow.com/a/64285108
-Settings -> Prettier:Print
-Width -> Prose Wrap: preserve
 
 # yamllint
 
