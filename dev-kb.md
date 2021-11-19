@@ -986,6 +986,8 @@ docker stat
 
 ## docker build mac client with proxy
 
+https://docs.docker.com/config/daemon/
+
 ```bash
 # with alpaca/cntlm port forwarding to localhost:3128
 # this works
@@ -999,6 +1001,37 @@ docker build \
   --build-arg http_proxy=http://localhost:3128 \
   --build-arg https_proxy=http://localhost:3128
   .
+```
+
+## docker daemon
+
+```bash
+# service
+sudo systemctl stop docker
+sudo systemctl start docker
+sudo systemctl is-active docker
+> active
+
+# show info
+docker info
+
+# logs
+journalctl -xu docker.service
+cat /var/log/syslog
+cat /var/log/messages
+```
+
+## docker clean up
+
+```bash
+# show docker volume usage
+docker system df
+
+# clean up
+docker system prune # unused containers, networks, images (dangling)
+docker system prune -a # include all unused images not just dangling
+docker system prune -f # no confirmation
+docker system prune --volumes # include volumes
 ```
 
 ## docker run mac client with proxy
@@ -1125,6 +1158,29 @@ docker inspect --format='{{.LogPath}}' containername
 
 # see live logs
 tail -f `docker inspect --format='{{.LogPath}}' containername`
+```
+
+## networking
+
+### port in use errors
+
+Error when starting containers, even after stopping / removing all running containers.
+
+```bash
+Bind for 0.0.0.0:27017 failed: port is already allocated
+```
+
+Fix as per https://stackoverflow.com/a/56728996
+
+```bash
+# stop all running containers
+docker-compose down
+
+# find process using port
+sudo lsof -i -P -n | grep 27017
+
+# kill process
+sudo kill -9 <process_id>
 ```
 
 ## output image to tar and import to create single layer image
@@ -1556,6 +1612,9 @@ git push origin "v0.2" -f
 # show oneline commits and tags
 git log --pretty=oneline --abbrev-commit
 
+# show diff branch with master
+git diff --name-only master...
+
 # show staged files
 git diff --name-only --cached
 ```
@@ -1741,9 +1800,13 @@ git branch --merged nonprod | grep -v '^[ *]*nonprod$' | xargs git branch -d
 
 ```bash
 git checkout master
-git pull upstream master # or just `git pull` if `master` is set to track `upstream/master`
+git pull origin master # or just `git pull` if `master` is set to track `origin/master`
 git checkout feature
 git rebase master
+
+# in one line
+git pull --rebase origin master
+
 git push -f
 ```
 
