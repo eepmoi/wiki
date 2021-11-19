@@ -476,6 +476,16 @@ shopt -u dotglob
 echo "bnVsbA==" | base64 --decode
 ```
 
+## disk usage
+
+```bash
+# size of current folder
+du -sh /path
+
+# volumes
+df -h
+```
+
 ## envsubst
 
 https://unix.stackexchange.com/questions/492772/replace-environment-variables-in-text-if-they-exist
@@ -1670,7 +1680,7 @@ git clone git@github.com:eepmoi/k8s-debug-pod.git
 git clone https://github.com/eepmoi/k8s-debug-pod.git
 
 git checkout -b readme_update
-git push -u origin readme_update
+git push -u origin readme_update$$
 
 git commit -m "Add more dev tool installs."
 git commit -m "Update onboarding steps"
@@ -3278,23 +3288,26 @@ Then you can simply press d or x to delete all the lines.
 ## \_useful plugins
 
 General plugins without their own section below:
-https://marketplace.visualstudio.com/items?itemName=chenzhe.split-line
-https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner
-https://marketplace.visualstudio.com/items?itemName=GitHub.github-vscode-theme
-https://marketplace.visualstudio.com/items?itemName=GrapeCity.gc-excelviewer
-https://marketplace.visualstudio.com/items?itemName=GrapeCity.gc-excelviewer
-https://marketplace.visualstudio.com/items?itemName=gurumukhi.selected-lines-count
-https://marketplace.visualstudio.com/items?itemName=hoovercj.ruby-linter
-https://marketplace.visualstudio.com/items?itemName=iciclesoft.workspacesort
-https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow
-https://marketplace.visualstudio.com/items?itemName=pdconsec.vscode-print
-https://marketplace.visualstudio.com/items?itemName=richie5um2.vscode-sort-json
-https://marketplace.visualstudio.com/items?itemName=ryanlaws.toggle-case
-https://marketplace.visualstudio.com/items?itemName=sgoley.lookml-syntax-highlighter
-https://marketplace.visualstudio.com/items?itemName=stkb.rewrap
-https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker
-https://marketplace.visualstudio.com/items?itemName=yzane.markdown-pdf
-https://marketplace.visualstudio.com/items?itemName=zhuangtongfa.Material-theme
+
+- https://marketplace.visualstudio.com/items?itemName=chenzhe.split-line
+- https://marketplace.visualstudio.com/items?itemName=emilast.LogFileHighlighter
+- https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner
+- https://marketplace.visualstudio.com/items?itemName=GitHub.github-vscode-theme
+- https://marketplace.visualstudio.com/items?itemName=GrapeCity.gc-excelviewer
+- https://marketplace.visualstudio.com/items?itemName=gurumukhi.selected-lines-count
+- https://marketplace.visualstudio.com/items?itemName=hoovercj.ruby-linter
+- https://marketplace.visualstudio.com/items?itemName=iciclesoft.workspacesort
+- https://marketplace.visualstudio.com/items?itemName=iliazeus.vscode-ansi
+- https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow
+- https://marketplace.visualstudio.com/items?itemName=pdconsec.vscode-print
+- https://marketplace.visualstudio.com/items?itemName=richie5um2.vscode-sort-json
+- https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer
+- https://marketplace.visualstudio.com/items?itemName=ryanlaws.toggle-case
+- https://marketplace.visualstudio.com/items?itemName=sgoley.lookml-syntax-highlighter
+- https://marketplace.visualstudio.com/items?itemName=stkb.rewrap
+- https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker
+- https://marketplace.visualstudio.com/items?itemName=yzane.markdown-pdf
+- https://marketplace.visualstudio.com/items?itemName=zhuangtongfa.Material-theme
 
 ### prettier
 
@@ -3358,7 +3371,7 @@ npm i # rebuild /node_modules
 https://marketplace.visualstudio.com/items?itemName=castwide.solargraph
 
 This plugin provides intellisense and also some limited "find references" for
-definition of variables/methods. It works in conjunction with rebornix.Ruby
+definition of variables/methods. It works in conjunction with `rebornix.Ruby`
 plugin, just need to disable intellisense on that side.
 
 Manual steps:
