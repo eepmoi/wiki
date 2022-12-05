@@ -1157,10 +1157,25 @@ docker build -t docker.com/jenkins:v14407 .
 docker build -t docker.com/nginx:e4fd463bb4206fde94c953a7ea0f0723557dbd8 .
 ```
 
+## copy file to/from container
+
+https://docs.docker.com/engine/reference/commandline/cp/
+
+```bash
+# Copy a local file into container
+docker cp ./some_file CONTAINER:/work
+
+#Copy files from container to local path
+docker cp CONTAINER:/var/logs/ /tmp/app_logs
+
+# Copy a file from container to stdout. Please note cp command produces a tar stream
+docker cp CONTAINER:/var/logs/app.log - | tar x -O | grep "ERROR"
+```
+
 ## cpu/memory usage
 
 ```bash
-docker stat
+docker stats
 ```
 
 ## docker build mac client with proxy
@@ -2160,6 +2175,15 @@ git revert --no-commit D C B
 git reset --hard A
 git reset --soft D # (or ORIG_HEAD or @{1} [previous location of HEAD]), all of which are D
 git commit
+```
+
+## show real time instead of xxx days
+
+https://justinnoel.dev/2020/11/21/displaying-real-times-in-github/
+
+```bash
+# AT version
+javascript:(function() %7B    var style %3D document.createElement(%27style%27)%3B    document.head.appendChild(style)%3B    var sheet %3D style.sheet%3B    sheet.addRule(%27time-ago:before,relative-time:before%27, %27content: attr(title)%3Bdisplay: block%3Bfont-size: 0.6rem%3B%27)%3B  %7D)()
 ```
 
 ## standards
@@ -3774,6 +3798,8 @@ It's a wrapper on `ruby -wc`
 #### prettier formatting
 
 **NOTE** no longer working with prettier ruby npm v3.1.2, need to use v2.1
+Possible fix: https://github.com/prettier/plugin-ruby/issues/1253
+
 https://github.com/prettier/plugin-ruby/issues/1228#issuecomment-1126624875
 
 https://github.com/prettier/plugin-ruby#usage-with-an-editor
