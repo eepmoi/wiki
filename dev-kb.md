@@ -1130,6 +1130,27 @@ time_starttransfer:  %{time_starttransfer}s\n\
 
 # docker
 
+# docker compose
+
+## run interactive shell
+
+https://www.baeldung.com/ops/docker-compose-interactive-shell#interactive-shell-in-docker
+
+```bash
+# add this to your docker compose yml
+myapp:
+  image: abc
+  stdin_open: true # docker run -i
+  tty: true        # docker run -t
+
+# then run
+docker compose run \
+  --entrypoint /bin/bash \
+  --rm \
+  -u root \
+  myapp
+```
+
 ## \_references
 
 https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes#a-docker-cheat-sheet
@@ -1276,7 +1297,7 @@ docker run \
 # override entrypoint (not needed if cmd is used in dockerfile)
 docker run \
   --pull=always \
-  -entrypoint /bin/bash \
+  --entrypoint /bin/bash \
   --rm \
   -it \
   -u root \
@@ -2184,6 +2205,13 @@ https://justinnoel.dev/2020/11/21/displaying-real-times-in-github/
 ```bash
 # AT version
 javascript:(function() %7B    var style %3D document.createElement(%27style%27)%3B    document.head.appendChild(style)%3B    var sheet %3D style.sheet%3B    sheet.addRule(%27time-ago:before,relative-time:before%27, %27content: attr(title)%3Bdisplay: block%3Bfont-size: 0.6rem%3B%27)%3B  %7D)()
+```
+
+## stash
+
+```bash
+# checkout single file from stash
+git checkout stash@{0} -- <filename>
 ```
 
 ## standards
@@ -3221,9 +3249,6 @@ https://github.com/Logan-Lin/SortMarkdown
 # https://stackoverflow.com/a/199560
 
 def my_method(arg1, arg2)
-  var = arg2
-  p binding.local_variables #=> [:arg1, :arg2, :var]
-  p binding.local_variable_get(:arg1) #=> 1
   p __method__.to_s # string
   p __method__ # symbol
   p Hash[binding.local_variables.map { |x| [x, binding.local_variable_get(x)] }] #=> {:arg1 => 1, :arg2 => 2, :var => 2}
