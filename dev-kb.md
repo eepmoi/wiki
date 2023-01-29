@@ -3272,6 +3272,7 @@ my_method(1, 2)
 ```
 
 ## uninstall all gems
+
 ```
 gem list
 gem uninstall -aIx
@@ -3532,6 +3533,11 @@ Potential workaround using TF_CLI_ARGS
 https://www.terraform.io/docs/commands/environment-variables.html#tf_cli_args-and-tf_cli_args_name
 
 https://archive.sweetops.com/terraform/2019/03/
+
+## dynamic blocks
+
+Nested dynamic blocks
+https://stackoverflow.com/questions/69226983/dynamically-aws-iam-policy-document-with-principals
 
 ## for_each
 
