@@ -464,6 +464,8 @@ function ruby_prettier (
 
 ## arrays and looping
 
+Note - cannot store arrays in env variables which are key/value pairs only
+
 https://www.shell-tips.com/bash/arrays/#array-operations
 
 https://stackoverflow.com/questions/8880603/loop-through-an-array-of-strings-in-bash#comment110320649_8880633
