@@ -167,8 +167,8 @@ traceroute to s3-ap-southeast-2.amazonaws.com (52.95.134.47), 30 hops max, 60 by
  8  52.95.134.47  0.836 ms  0.820 ms  0.809 ms
 
 # no vpc endpoint, nothing setup for this region
-sudo traceroute -n -T -p 443 s3-ap-southeast-1.amazonaws.com
-traceroute to s3-ap-southeast-1.amazonaws.com (52.219.37.26), 30 hops max, 60 byte packets
+sudo traceroute -n -T -p 443 s3-ap-southeast-2.amazonaws.com
+traceroute to s3-ap-southeast-2.amazonaws.com (52.219.37.26), 30 hops max, 60 byte packets
  1  10.9.0.26  0.814 ms  0.813 ms  0.803 ms
  2  * * *
  3  * * *
@@ -225,6 +225,8 @@ Escape character is '^]'.
 ```
 
 It's actually quite hard to test that traffic is going via the interface endpoint.
+
+AWS service endpoints here: https://docs.aws.amazon.com/general/latest/gr/aws-service-information.html
 
 ```bash
 # with interface endpoint, resolves to private IP
@@ -332,20 +334,21 @@ https://github.com/libre-devops/utils/blob/dev/scripts/terraform/tf-sort.sh
 
 ```bash
 # misc
-alias bash-reload="exec bash -l"
+alias bash_reload="exec bash -l"
 
 # git
-alias g-amend-new="git add . $DEV_ENV_PATH; git commit --amend --no-edit; git push -f"
-alias g-amend-staged="git commit --amend --no-edit; git push -f"
-alias g-amend-updated="git add -u $DEV_ENV_PATH; git commit --amend --no-edit; git push -f"
+alias g_amend_commit="git commit --amend --no-edit"
+alias g_amend_new="git add . $DEV_ENV_PATH; git commit --amend --no-edit; git push -f"
+alias g_amend_staged="git commit --amend --no-edit; git push -f"
+alias g_amend_updated="git add -u $DEV_ENV_PATH; git commit --amend --no-edit; git push -f"
 alias g_commit_reuse="git commit --reuse-message=HEAD"
-alias g-diff="git diff --name-only origin/master..."
-alias g-log="git log --pretty=oneline --abbrev-commit"
-alias g-rebase="git pull origin master --rebase"
-alias g-stage-new="git add . $DEV_ENV_PATH"
-alias g-stage-updated="git add -u $DEV_ENV_PATH"
-alias g-new-dry="git add . $DEV_ENV_PATH -n"
-alias g-stash="git stash save"
+alias g_diff="git diff --name-only origin/master..."
+alias g_log="git log --pretty=oneline --abbrev-commit"
+alias g_rebase="git pull origin master --rebase"
+alias g_stage_new="git add . $DEV_ENV_PATH"
+alias g_stage_updated="git add -u $DEV_ENV_PATH"
+alias g_new_dry="git add . $DEV_ENV_PATH -n"
+alias g_stash="git stash save"
 
 # vscode
 alias code="/Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin/code -r"
@@ -357,8 +360,12 @@ alias clippy_tests="cargo clippy --tests -- --deny warnings"
 
 # terraform
 alias terraform_fmt="terraform fmt -recursive"
-alias terraform_sort_var="~/.bash_scripts/tf-sort.sh variables.tf variables_sorted.tf"
+alias terraform_sort_var="~/.bash_scripts/tf-sort.sh variables.tf variables.tf"
+alias terraform_sort_var_new="~/.bash_scripts/tf-sort.sh variables.tf variables_sorted.tf"
 
+# node
+alias node16='export PATH="/usr/local/bin:/usr/local/opt/node@16/bin:$PATH"; node -v'
+alias node14='export PATH="/usr/local/opt/node@14/bin:$PATH"; node -v'
 ```
 
 #### functions
