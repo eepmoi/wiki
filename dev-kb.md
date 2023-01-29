@@ -53,7 +53,7 @@ cd ~/go/src/github.com/samuong/alpaca; git pull origin master; go build .; mv al
 ## assume role bash
 
 ```bash
-unset AWS_ACCESS_KEY_ID ; $(aws sts assume-role --role-arn arn:aws:iam::123456789011:role/name --role-session-name "name" | tr -d ',' | awk '/SecretAccessKey/ { system("echo export AWS_SECRET_ACCESS_KEY="$2) }; /SessionToken/ { system("echo export AWS_SECURITY_TOKEN="$2) } ; /AccessKeyId/ { system("echo export AWS_ACCESS_KEY_ID="$2) }')
+unset AWS_ACCESS_KEY_ID; unset AWS_SECRET_ACCESS_KEY; unset AWS_SESSION_TOKEN; $(aws sts assume-role --role-arn arn:aws:iam::123456789011:role/name --role-session-name "name" | tr -d ',' | awk '/SecretAccessKey/ { system("echo export AWS_SECRET_ACCESS_KEY="$2) }; /SessionToken/ { system("echo export AWS_SESSION_TOKEN="$2) } ; /AccessKeyId/ { system("echo export AWS_ACCESS_KEY_ID="$2) }')
 ```
 
 ## cloud-init
@@ -782,6 +782,17 @@ rsync --dry-run -aEvq --delete /src/* /dest/
 
 # executes in terminal's shell process
 . ./my_script.sh
+```
+
+```bash
+# background process, all output directed to nohup.out
+nohup some_cmd &
+
+# background process, all output captured by logfile
+nohup some_cmd > some_file 2>&1 &
+
+# check background jobs
+jobs
 ```
 
 ## sample help text
@@ -3259,6 +3270,12 @@ end
 my_method(1, 2)
 ```
 
+## uninstall all gems
+```
+gem list
+gem uninstall -aIx
+```
+
 # rust
 
 Lastest stable version here: https://github.com/rust-lang/rust/releases
@@ -3711,6 +3728,20 @@ Then you can simply press d or x to delete all the lines.
 ```
 
 # vscode
+
+## \_check which plugin is using CPU
+
+https://apple.stackexchange.com/a/393075
+
+```
+Open Activity Monitor
+Within the list of prcesses, find the one that has the highest CPU usage (it should already be at the top).
+For this process, find the PID number.
+Then, within terminal, type this:
+ps aux | grep 20295
+kill -9 20295
+note that you should change "20295" to the PID number that you found in step 3
+```
 
 ## \_useful extensions
 
