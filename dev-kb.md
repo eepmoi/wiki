@@ -2086,6 +2086,9 @@ git am <patch_file>
 # create patch for staged but uncommited changes
 git diff --staged > mypatch.patch
 
+# create patch for diff between master and branch
+git diff master... > mypatch.patch
+
 # create patch for diff between two commits (eg master)
 git diff master 596ab5736c3 > mypatch.patch
 ```
