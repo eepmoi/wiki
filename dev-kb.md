@@ -2051,6 +2051,12 @@ git reset origin/master --hard
 git pull
 ```
 
+## find last commit that modified/deleted file
+
+```bash
+git rev-list -n 1 HEAD -- <path_to_file>
+```
+
 ## forks
 
 ```bash
