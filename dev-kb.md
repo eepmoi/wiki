@@ -364,14 +364,46 @@ alias terraform_sort_var="~/.bash_scripts/tf-sort.sh variables.tf variables_sort
 #### functions
 
 ```bash
+#!/bin/sh
+
 # git branch rename
-g-rename-branch() {
+g_rename_branch() {
   (
     set -e
     git branch -m $1 $2
     git push -u origin $2
     git push origin :$1
   )
+}
+
+# BK token
+bk_read_token() {
+  BUILDKITE_READ_API_TOKEN="$(
+    CHAMBER_USE_PATHS=1 \
+      CHAMBER_SECRET_BACKEND="S3-KMS" \
+      CHAMBER_S3_BUCKET="stile-chamber-dev" \
+      aws-vault exec dev -- chamber read -q deploy-stack buildkite_api_access_token_read_artifacts
+  )"
+  export BUILDKITE_READ_API_TOKEN
+}
+
+# BK find the commit for a given build number on BFP
+bk_find_commit() {
+bk_read_token
+number="$1"
+curl -Ss -H "Authorization: Bearer ${BUILDKITE_READ_API_TOKEN}" \
+    "https://api.buildkite.com/v2/organizations/stile-education/pipelines/big-friendly-pipeline/builds/${number}" |
+    jq -Mr .commit
+}
+
+# BK commit diff between two builds
+bk_git_diff() {
+build_number_1="$1"
+build_number_2="$2"
+
+commit_1=$(bk_find_commit "${build_number_1}")
+commit_2=$(bk_find_commit "${build_number_2}")
+open "https://github.com/StileEducation/dev-environment/compare/${commit_1}...${commit_2}"
 }
 ```
 
