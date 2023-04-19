@@ -2,6 +2,8 @@
 
 Current version is for m1 macs.
 
+https://gist.github.com/zachbrowne/8bc414c9f30192067831fafebd14255c
+
 ## pre req installs
 
 ```bash
@@ -27,6 +29,9 @@ brew install git
 ## .bash_profile
 
 ```bash
+# brew
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 # load bash_source folder
 if [ -d ~/.bash_source ]; then
     for file in ~/.bash_source/*; do
@@ -34,29 +39,23 @@ if [ -d ~/.bash_source ]; then
     done
 fi
 
-# rbenv
-eval "$(rbenv init - bash)"
-
 # bash completion
 [[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"
 
-# kubectl completion
-source <(kubectl completion bash)
-
-# nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-. "$HOME/.cargo/env"
-
-# rust
-. "$HOME/.cargo/env"
-
+# git completion
+[[ -r ~/.bash_scripts/git-completion.bash ]] && . ~/.bash_scripts/git-completion.bash
 ```
 
 ## scripts folder
 
 Create/Add these to `~/.bash_scripts` folder
+
+### git completion
+
+```bash
+curl https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash -o ~/.bash_scripts/git-completion.bash
+chmod u+x  ~/.bash_scripts/git-completion.bash
+```
 
 ### .git-prompt.sh
 
@@ -64,7 +63,6 @@ https://anotheruiguy.gitbooks.io/gitforeveryone/content/auto/README.html
 
 ```bash
 curl -o ~/.bash_scripts/.git-prompt.sh https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh
-
 ```
 
 ### tf-sort.sh
@@ -237,6 +235,28 @@ export PATH="/usr/local/opt/openjdk/bin:$PATH"
 
 # mysql-client
 export PATH="/usr/local/opt/mysql-client/bin:$PATH"
+```
+
+### shell_completion
+
+```bash
+# bash completion
+export BASH_COMPLETION_COMPAT_DIR="/opt/homebrew/etc/bash_completion.d"
+[[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"
+
+# git completion
+[[ -r ~/.bash_scripts/git-completion.bash ]] && . ~/.bash_scripts/git-completion.bash
+
+# when pressing tab autocomplete, match regardless of case
+set completion-ignore-case on
+
+# use the text that has already been typed as the prefix for searching through
+# commands (i.e. more intelligent Up/Down behaviour)
+bind '"\e[B": history-search-forward'
+bind '"\e[A": history-search-backward'
+
+# list all matches in case multiple possible completions are possible
+set show-all-if-ambiguous on
 ```
 
 ### vscode_prettier
