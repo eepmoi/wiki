@@ -1642,6 +1642,11 @@ istioctl proxy-config log <pod-name[.namespace]> -r
 ## \_boiler plate
 
 ```bash
+# git config
+git config --global user.email "abc@def.com.au"
+git config --global user.name "Andy Tang"
+git config --global pull.rebase true
+
 # misc
 git checkout -b andy-deploy-helloweb
 git push -u origin andy-deploy-helloweb
@@ -1836,8 +1841,20 @@ git checkout -b sync-fork-with-upstream
 git push -u origin sync-fork-with-upstream
 
 git remote add upstream https://github.com/user/repo.git
+
+# fetch / merge
 git fetch upstream
 git merge upstream/master
+git push -f
+
+# pull
+git pull upstream master
+git push -f
+
+# rebase
+git fetch upstream
+git rebase upstream/master
+git push -f
 ```
 
 ## log
@@ -2934,6 +2951,23 @@ jsonnet -e 'std.length((import "launchpad.jsonnet").sync)'
 brew install alt-tab
 
 ```
+
+## fix crappy default dictionary
+
+https://apple.stackexchange.com/a/444261
+https://github.com/wooorm/dictionaries#example-use-with-macos
+
+```bash
+curl -o ~/Downloads/en_AU.dic https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en-AU/index.dic
+curl -o ~/Downloads/en_AU.aff https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en-AU/index.aff
+sudo mkdir -p /Library/Spelling
+sudo cp ~/Downloads/en_AU.* /Library/Spelling
+```
+
+- System Settings -> Keyboard -> Text Input -> Input Sources -> Edit -> Spelling -> click drop down
+- Scroll to bottom and click `Set Up`
+- Uncheck ALL and only select `Australian English (Library)`
+- Click `Done`. Restart apps for it to take effect.
 
 ## rotate log files
 
