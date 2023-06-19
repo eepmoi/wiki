@@ -50,6 +50,28 @@ cd ~/go/src/github.com/samuong/alpaca; git pull origin master; go build .; mv al
 
 # aws
 
+## aws cli
+
+```bash
+# delete all buckets containing name
+bucket_name=images-dev-andy
+buckets="$(aws s3api list-buckets --query "Buckets|[?contains(Name, '${bucket_name}')].Name" --output text)"
+for bucket in ${buckets}; do
+  echo "Deleting bucket and contents ${bucket}" >&2
+  aws s3 rb --force "s3://${bucket}"
+done
+
+# delete all cloudformation stacks containing name
+stack_name=imagebuilder-andy
+stacks="$(aws cloudformation describe-stacks \
+  --query "Stacks[?contains(StackName,'${stack_name}')]|[?ParentId==null].StackName" --output text)"
+for stack in ${stacks}; do
+  echo "Deleting stack ${stack}" >&2
+  aws cloudformation delete-stack --stack-name "${stack}"
+  aws cloudformation wait stack-delete-complete --stack-name "${stack}"
+done
+```
+
 ## assume role bash
 
 ```bash
@@ -105,7 +127,7 @@ cloud-init single --name cc_scripts_user --frequency=always # execute runcmd
 fields @timestamp, @logStream, @message
 | sort @timestamp
 | filter @logStream like /(?i)(abcd-1234)/
-#    and @message like /(?i)(xyzabc)/
+# | filter @logStream like /(?i)(abcd-1234)/ and @message like /(?i)(xyzabc)/
 # | limit 500
 ```
 
@@ -272,6 +294,88 @@ telnet 10.9.97.134 443 443
 ```
 
 # bash
+
+## `<<` vs `<<<` vs `<` vs `< <()`
+
+### here doc `<<` and here string `<<<`
+
+https://askubuntu.com/questions/678915/whats-the-difference-between-and-in-bash
+
+here-document `<<` - define text inline with your ending identifier
+
+```bash
+wc <<ANY_STRING
+one two three
+four five
+ANY_STRING
+> 2 5 24
+```
+
+here-string `<<<` - use a pre defined string instead
+
+```bash
+STRING='one two three four five'
+wc <<< $STRING
+> 2 5 24
+```
+
+### redirection `<` and process substitution `< <()`
+
+```json
+{
+  "amis": [
+    {
+      "region": "ap-southeast-2",
+      "image": "ami-0a496f5be1029195e"
+    },
+    {
+      "region": "ap-southeast-1",
+      "image": "ami-0787fef2841b3d396"
+    },
+    {
+      "region": "us-west-1",
+      "image": "ami-0bb532e109304f5ca"
+    }
+  ]
+}
+```
+
+use redirection `<` instead of cat or echo
+
+```bash
+# bad
+cat ./ami_ids.json | jq -r '.amis[] | "\(.region) \(.image)"'
+
+# good
+jq -r '.amis[] | "\(.region) \(.image)"' < ./ami_ids.json
+
+```
+
+- one additional benefit is that this doesn't create a new process, eg reading a file into a variable:
+
+```bash
+# creates new process with cat
+my_var=$(cat ./ami_ids.json)
+
+# doesn't create new process, same outcome
+my_var=$(< ./ami_ids.json)
+```
+
+use process substitution with redirection `< <(process)` instead of cat or echo
+
+```bash
+# bad
+cat ./ami_ids.json | jq -r '.amis[] | "\(.region) \(.image)"' | while read -r region image; do
+  echo "region: ${region}"
+  echo "image: ${image}"
+done
+
+# good
+while read -r region image; do
+  echo "region: ${region}"
+  echo "image: ${image}"
+done < <(jq -r '.amis[] | "\(.region) \(.image)"' < ./ami_ids.json)
+```
 
 ## arrays and looping
 
@@ -469,14 +573,14 @@ Changing folders in function {} vs ()
 
 ```bash
 # this will change the current terminal session's folder
-function vscode_prettier {
+function vscode_prettier() {
 cd ~/node_modules
 npm uninstall prettier @prettier/plugin-ruby
 npm install --save-dev prettier @prettier/plugin-ruby@2.1.0
 }
 
 # this will not
-function vscode_prettier (
+function vscode_prettier() (
 cd ~/node_modules
 npm uninstall prettier @prettier/plugin-ruby
 npm install --save-dev prettier @prettier/plugin-ruby@2.1.0
@@ -1889,8 +1993,6 @@ git diff master 596ab5736c3 > mypatch.patch
 
 ## prune local branches that are no longer in remote
 
-## prune local branches that are no longer in remote
-
 git prune explained:
 https://stackoverflow.com/questions/20106712/what-are-the-differences-between-git-remote-prune-git-prune-git-fetch-prune/20107184
 
@@ -2969,6 +3071,10 @@ sudo cp ~/Downloads/en_AU.* /Library/Spelling
 - Uncheck ALL and only select `Australian English (Library)`
 - Click `Done`. Restart apps for it to take effect.
 
+## run script daily using automator
+
+https://osxdaily.com/2021/09/29/schedule-sending-emails-mac-automator/
+
 ## rotate log files
 
 https://www.richard-purves.com/2017/11/08/log-rotation-mac-admin-cheats-guide/
@@ -3107,6 +3213,17 @@ for (sort @chapters) {
 ## sort by headings - python
 
 https://github.com/Logan-Lin/SortMarkdown
+
+# python
+
+## pytest
+
+```bash
+# show print statements
+# https://stackoverflow.com/a/59156707
+pytest -rA
+
+```
 
 # ruby
 
@@ -3678,7 +3795,21 @@ General extensions without their own section below:
 - https://marketplace.visualstudio.com/items?itemName=yzane.markdown-pdf
 - https://marketplace.visualstudio.com/items?itemName=zhuangtongfa.Material-theme
 
-### prettier
+## \_useful_workspace_settings
+
+vscode `workspace.code-workspace`
+
+### ignore folders from git explorer
+
+```json
+
+  "settings": {
+    "git.ignoredRepositories": ["Users/antang/git/wiki"],
+  },
+
+```
+
+## prettier
 
 https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode
 
@@ -3688,7 +3819,7 @@ Note vscode plugin settings will not be used if there is a local config file.
 ["INFO" - 2:07:30 PM] Detected local configuration (i.e. .prettierrc or .editorconfig), VS Code configuration will not be used
 ```
 
-#### markdown
+### markdown
 
 Hard wrap lines https://stackoverflow.com/a/64285108 Settings -> Prettier:Print
 Width -> Prose Wrap: preserve
@@ -3696,24 +3827,76 @@ Width -> Prose Wrap: preserve
 Note if this is not working check whether there is a local prettier config file
 overriding vscode settings:
 
-### ruby
+## python
+
+https://code.visualstudio.com/docs/python/python-tutorial
+https://code.visualstudio.com/docs/python/testing#_debug-tests
+https://code.visualstudio.com/docs/python/debugging
+
+Install `pyenv` and `pyenv-virtualenv`
+
+```bash
+brew install pyenv
+brew install pyenv-virtualenv
+```
+
+Install these extensions
+
+- https://marketplace.visualstudio.com/items?itemName=ms-python.python
+- https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance
+- https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter
+
+User `settings.json`
+
+```json
+  "python.formatting.provider": "black",
+  "python.linting.enabled": true,
+  "python.terminal.activateEnvironment": false, // must set this for pyenv venv to work
+  "python.testing.pytestEnabled": true,
+  "python.venvPath": "~/.pyenv", // must be in user settings
+```
+
+### debuggin code/tests
+
+To enable debugging for code and tests
+
+- Set path below to test folder so vscode test explorer can discover properly
+  without scanning whole repository
+- https://code.visualstudio.com/docs/python/testing#_debug-tests
+
+Workspace `root_folder\.vscode\settings.json` or `workspace.code-workspace` file
+
+- can add this to user `settings.json` instead but that will apply globally
+
+```json
+
+  "settings": {
+  "python.testing.pytestArgs": [
+    "workspace_root_relative/path/to/some/folder",
+    "workspace_root_relative/path/to/some/test_file.py"
+  ]
+  },
+
+```
+
+## ruby
 
 Install this plugin:
 https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby
 
-#### execute code
+### execute code
 
 Install this plugin:
 https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner
 
-#### linting
+### linting
 
 Install this plugin:
 https://marketplace.visualstudio.com/items?itemName=hoovercj.ruby-linter
 
 It's a wrapper on `ruby -wc`
 
-#### prettier formatting
+### prettier formatting
 
 **NOTE** no longer working with prettier ruby npm v3.1.2, need to use v2.1
 Possible fix: https://github.com/prettier/plugin-ruby/issues/1253
@@ -3742,7 +3925,7 @@ npm install --save-dev prettier @prettier/plugin-ruby@2.1.0
 }
 ```
 
-#### solargraph
+### solargraph
 
 https://marketplace.visualstudio.com/items?itemName=castwide.solargraph
 
@@ -3766,12 +3949,12 @@ solargraph scan -v
 }
 ```
 
-### syntax higlighting
+## syntax higlighting
 
 Install this plugin:
 https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby
 
-### terraform
+## terraform
 
 Use these settings to get formating working: https://github.com/hashicorp/vscode-terraform/blob/main/README.md#formatting
 
