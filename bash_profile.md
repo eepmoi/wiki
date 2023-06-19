@@ -24,6 +24,11 @@ brew install bash-completion@2
 
 # upgrade git
 brew install git
+
+# install pyenv and pyenv-virtualenv
+brew install pyenv
+brew install pyenv-virtualenv
+
 ```
 
 ## .bash_profile
@@ -39,11 +44,12 @@ if [ -d ~/.bash_source ]; then
     done
 fi
 
-# bash completion
-[[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"
+# pyenv
+export PYENV_VERSION=3.10.0 # global override if set
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
 
-# git completion
-[[ -r ~/.bash_scripts/git-completion.bash ]] && . ~/.bash_scripts/git-completion.bash
 ```
 
 ## scripts folder
