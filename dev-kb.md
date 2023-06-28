@@ -537,17 +537,30 @@ df -h
 https://unix.stackexchange.com/questions/492772/replace-environment-variables-in-text-if-they-exist
 
 Replaces variables in input. Not sure why you wouldn't just use echo, perhaps
-used for in files
-
-Can be used in files: https://mywiki.wooledge.org/TemplateFiles
-
-Also useful for cat for paths: cat
-./kube-system/$CLUSTER_VERSION/cluster-autoscaler.yaml | envsubst | kubectl
-apply -f -
+used for in files. Typically must export vars but see buildkite example below.
 
 ```bash
+# Can be used in files: https://mywiki.wooledge.org/TemplateFiles
+# Also useful for cat for paths:
+cat ./kube-system/$CLUSTER_VERSION/cluster-autoscaler.yaml | envsubst | kubectl apply -f -
+
+# Alternative syntax
+envsubst < k8s/deployment.yml > "${manifest}"
+kubectl apply -f "${manifest}"
+
+# using echo
 echo 'Hello $USER' | envsubst
 Hello myusername
+
+# buildkite annotations, without exporting vars
+PIPELINE=$pipeline ARCHITECTURE=$arch IMAGE_BUILD_VERSION=$image_build_version \
+  envsubst < ./templates/annotations/imagebuilder.md | buildkite-agent annotate --style 'success' --context "ctx-success-${arch}" --append
+```
+
+For macos need to install
+
+```
+brew install gettext
 ```
 
 ## find
@@ -3074,6 +3087,8 @@ sudo cp ~/Downloads/en_AU.* /Library/Spelling
 ## run script daily using automator
 
 https://osxdaily.com/2021/09/29/schedule-sending-emails-mac-automator/
+
+Create as automator->application (not workflow) so it runs instead of just opening automator.
 
 ## rotate log files
 
