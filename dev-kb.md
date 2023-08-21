@@ -703,10 +703,20 @@ rename -n -e 's/_.*_/_/'  *.png
 
 ```bash
 # rsync to synch two folders
-# --delete removes extra files from destination; -q is quiet mode
+# Note: The trailing slash (/) on the source directory modifies the behaviour of the rsync command.
+# If you do not use a trailing slash, the source directory is copied to the destination directory, and then the contents of the directory.
+# When you do use the trailing slash, rsync only copies the content of the source without creating an additional directory level.
+
+# src/* is important to include all files in src folder like ".abc"
+
+# --delete removes extra files from destination
+# -u skips files on dest that are newer
+# -q is quiet mode
 rsync -aEv --delete /src/* /dest/
 rsync --dry-run -aEv --delete /src/* /dest/
+rsync --dry-run -aEvu --delete /src/* /dest/
 rsync --dry-run -aEvq --delete /src/* /dest/
+
 ```
 
 ## running shell scripts
@@ -1538,6 +1548,14 @@ function wait_nlb {
 }
 ```
 
+# excel
+
+## insert trendline for pivot chart
+
+Add custom total column: https://answers.microsoft.com/en-us/msoffice/forum/all/how-to-show-grand-totals-on-pivot-chart/c123875c-5bec-47af-bb0a-58c8526ae440?messageId=9da4734f-36b1-4849-9c5d-cea9f8ba390d
+
+Then add to chart and hide line: https://superuser.com/questions/1445605/add-a-trendline-to-a-stacked-bar-chart/1445657#1445657
+
 # gcloud
 
 ## gcs download
@@ -1784,11 +1802,11 @@ git add . ; git commit --amend --no-edit; git push -f
 
 git commit -m "Add andy-test namespace"
 
-git commit
+git commit -m "
 Add andy-test namespace
 
 More information 1
-More information 2
+More information 2"
 
 # skip pre commit hooks
 git commit --no-verify
@@ -1827,6 +1845,15 @@ Add list of commits to a `.git-blame-ignore-revs` file and then add to git confi
 
 ```bash
 git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
+## bundle
+
+Used to back up git repo including history: https://git-scm.com/docs/git-bundle
+
+```bash
+# in parent folder with git repos as child folders, create bundle for each repo
+ls -d \*/ | sed 's|[/]||g' | xargs -t -I{} git -C ./{} bundle create ../{}.bundle --all
 ```
 
 ## checkout PRs locally
@@ -2024,6 +2051,7 @@ https://stackoverflow.com/questions/20106712/what-are-the-differences-between-gi
 # https://stackoverflow.com/questions/44477690/delete-local-git-branches-if-their-remote-tracking-references-dont-exist-anymor
 git fetch --prune
 git branch -lvv | cut -c3- | awk '/: gone]/ {print $1}' | xargs git branch -d
+git branch -lvv | cut -c3- | awk '/: gone]/ {print $1}' | xargs git branch -D
 
 # branches that are merged
 git branch --merged master | grep -v '^[ *]*master$' | xargs git branch -d
@@ -2171,6 +2199,18 @@ git revert --no-commit D C B
 git reset --hard A
 git reset --soft D # (or ORIG_HEAD or @{1} [previous location of HEAD]), all of which are D
 git commit
+```
+
+## run git command in different folder
+
+Used to run git as if it were in a different folder instead of having to cd into it.
+
+https://medium.com/@heba.waly/run-git-from-any-directory-git-c-vs-git-dir-2b6a3936582b
+https://stackoverflow.com/a/29072745
+
+```bash
+ls | xargs -I{} git -C {} pull # -C points to the git folder
+ls | xargs -I{} git -C {} pull # run in parallel
 ```
 
 ## show real time instead of xxx days
@@ -3248,6 +3288,8 @@ https://github.com/Logan-Lin/SortMarkdown
 # https://stackoverflow.com/a/59156707
 pytest -rA
 
+# show logger output, debug_logging is app specific env var for logger level
+debug_logging=DEBUG pytest -s -o log_cli=true ./src/tests/test_workflow.py
 ```
 
 # ruby
