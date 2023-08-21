@@ -566,6 +566,9 @@ brew install gettext
 ## find
 
 ```bash
+# find files with specific extension
+find . -name "*.yaml"
+
 # find modified log files
 cd /var/log
 sudo find . -type f -exec stat --format '%Y :%y %n' "{}" \; | sort -nr | cut -d: -f2- | head
@@ -573,8 +576,12 @@ sudo find . -type f -exec stat --format '%Y :%y %n' "{}" \; | sort -nr | cut -d:
 # recursive find and delete files named xxx.txt
 find . -name xxx.txt | xargs -I {} rm {}
 
-# find files with search word in current folder
-grep -rnw . -e "mongo.env"
+# list files, line and line number with search string in current folder
+grep -rnw -e "my-string" .
+
+# list file names only with search string in current folder
+grep -l -e "my-string" *.yaml
+
 
 # find number of files with key word in current folder
 find . -type f -exec grep -i "mongo.env" {} + | wc -l
@@ -1010,6 +1017,9 @@ openssl s_client -CAfile ~/Documents/work/certs/root_certs.pem -showcerts -conne
 ### \_misc
 
 ```bash
+# copy to clipboard
+cat result.txt | pbcopy
+
 # extract cert from keychain
 security find-certificate -p -c "Custom Global Root CA v2"
 
