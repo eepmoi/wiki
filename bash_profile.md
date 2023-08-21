@@ -80,6 +80,14 @@ curl -o ~/.bash_scripts/tf-sort.sh https://raw.githubusercontent.com/libre-devop
 
 ```
 
+### sync_docs
+
+```bash
+#!/usr/bin/env bash
+
+rsync -aEv --delete /Users/antang/Documents/* "/Users/antang/destination/"
+```
+
 ## source folder
 
 Create/Add these files to `~/.bash_source` folder
