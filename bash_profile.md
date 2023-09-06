@@ -85,7 +85,15 @@ curl -o ~/.bash_scripts/tf-sort.sh https://raw.githubusercontent.com/libre-devop
 ```bash
 #!/usr/bin/env bash
 
-rsync -aEv --delete /Users/antang/Documents/* "/Users/antang/destination/"
+# two way sync for shared folder for latest files (doesn't handle deletes)
+rsync -aEvu --delete /Users/antang/Documents/xyz/shared/* "/Users/antang/OneDrive - abc/xyz/shared/"
+rsync -aEvu --delete "/Users/antang/OneDrive - abc/xyz/shared/"* /Users/antang/Documents/xyz/shared/
+
+# sync everything except shared folder
+rsync -aEv --delete --exclude xyz/shared /Users/antang/Documents/* "/Users/antang/OneDrive - SEEK/"
+
+# sync from local
+rsync -aEv --delete /Users/antang/Documents/* "/Users/antang/Library/CloudStorage/GoogleDrive-abc@gmail.com/My Drive/work/abc/documents/"
 ```
 
 ## source folder
