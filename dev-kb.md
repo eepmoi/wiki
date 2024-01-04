@@ -1247,6 +1247,15 @@ https://docs.docker.com/config/daemon/systemd/#httphttps-proxy
 https://unix.stackexchange.com/questions/212894/whats-the-right-format-for-the-http-proxy-environment-variable-caps-or-no-ca#:~:text=http_proxy%20and%20friends%20isn't,and%20no_proxy%20are%20commonly%20lowercase
 
 ```bash
+# mount current directory and cd
+docker run \
+  --rm \
+  -it \
+  -v $PWD:/debug \
+  --workdir=/debug \
+  andytest \
+  sh
+
 # with alpaca/cntlm port forwarding to localhost:3128
 # run aws cli in a container
 docker run \
@@ -3101,6 +3110,20 @@ while [[ $(kubectl -n gatekeeper-system get pods -l control-plane=audit-controll
 done
 ```
 
+# java keystore
+
+```bash
+# decrypt and list keystore
+keytool -list -v -keystore keystore.jks -storepass <password>
+```
+
+# jsonnet
+
+```bash
+## print number of elements
+jsonnet -e 'std.length((import "launchpad.jsonnet").sync)'
+```
+
 # kubectx
 
 https://github.com/ahmetb/kubectx
@@ -3118,20 +3141,6 @@ cat << FOE >> ~/.bash_profile
 #kubectx and kubens
 export PATH=~/.kubectx:\$PATH
 FOE
-```
-
-# java keystore
-
-```bash
-# decrypt and list keystore
-keytool -list -v -keystore keystore.jks -storepass <password>
-```
-
-# jsonnet
-
-```bash
-## print number of elements
-jsonnet -e 'std.length((import "launchpad.jsonnet").sync)'
 ```
 
 # macos
@@ -3305,6 +3314,23 @@ for (sort @chapters) {
 ## sort by headings - python
 
 https://github.com/Logan-Lin/SortMarkdown
+
+# npm cli
+
+```
+# auto create token and login
+npm login
+
+# lists users and roles
+npm org ls @seek --json # all users
+npm org ls @seek atang-seek --json # specific user
+> {
+>  "atang-seek": "owner"
+> }
+
+# logout and clean up token created above
+npm logout
+```
 
 # python
 
