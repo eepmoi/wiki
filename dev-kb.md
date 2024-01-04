@@ -2058,6 +2058,29 @@ Uses `.gitignore` pattern matching: https://git-scm.com/docs/gitignore#_pattern_
 **/Dockerfile*
 ```
 
+testing codeowners globs
+
+```
+# Create test files and see what matches
+mkdir -p a/sub/pattern-test
+mkdir -p a/deep/nested/pattern-bootstrap
+mkdir -p a/deep/nested/pattern-bootstrap/nested/nested
+mkdir -p a/deep/nested/nested/nested/pattern-test/nested/nested/nested/nested
+
+touch a/sub/pattern-test/file.yaml
+touch a/deep/nested/pattern-bootstrap/config.yaml
+touch a/deep/nested/pattern-bootstrap/nested/nested/really_nested.yaml
+touch a/deep/nested/nested/nested/pattern-test/nested/nested/nested/nested/crazy.yaml
+
+# Use find or ls to test your pattern
+find . -path "./a/**/pattern*/*" -type f # must have ./ using -path
+ls .buildkite/pipeline*.yaml # without ./
+
+# codeowners
+a/**/pattern*/* @eepmoi
+.buildkite/pipeline*.yaml @eepmoi
+```
+
 ## delete branch
 
 ```bash
@@ -2073,10 +2096,16 @@ git checkout -b <branch> <sha>
 
 ```bash
 # show files only
-git diff --name-only master
+git diff --name-only main
 
 # show staged files
 git diff --name-only --cached
+
+# with remote
+git --no-pager diff origin/main...HEAD
+
+# no paging
+git --no-pager diff main
 ```
 
 ## duplicate repository
@@ -2112,6 +2141,16 @@ https://hackernoon.com/exclude-files-from-git-without-committing-changes-to-giti
 - syntax is the same as .gitignore
 
 ```bash
+cat > $PWD/.git/info/exclude << EOF
+.cursor
+AGENTS.MD
+openspec
+EOF
+```
+
+```bash
+rm -f $PWD/.git/info/exclude
+echo openspec/ >> $PWD/.git/info/exclude
 echo *.log >> ~/git/terraform-aws-core-bootstrap/.git/info/exclude
 echo .DS_Store >> ~/git/spin-config/.git/info/exclude
 echo *.spin >> ~/git/spin-config/.git/info/exclude
@@ -2165,9 +2204,12 @@ https://stackoverflow.com/questions/4479225/how-to-output-git-log-with-the-first
 ```bash
 # show one line commits with abbreviated commit sha and tags
 git log --pretty=oneline --abbrev-commit
+
+# show first 20 commit
+git log --pretty=format:"%h - %an, %ad : %s" --date=short --reverse | head -20
 ```
 
-## patch\*
+## patch
 
 https://devconnected.com/how-to-create-and-apply-git-patch-files/#Create_Git_Patch_for_Specific_Commit
 
@@ -2177,6 +2219,10 @@ git format-patch -1 <commit_sha>
 
 # apply patch
 git am <patch_file>
+
+# create patch for unstaged changes
+git diff > mypatch.patch
+
 
 # create patch for staged but uncommited changes
 git diff --staged > mypatch.patch
