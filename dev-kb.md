@@ -126,6 +126,12 @@ cloud-init single --name cc_scripts_user --frequency=always # execute runcmd
 ## cloudwatch insights
 
 ```bash
+# message search
+fields @timestamp, @message, @logStream, @log
+| sort @timestamp
+| filter @message like /(?i)(xyzabc)/
+| limit 500
+
 # specific logstream
 fields @timestamp, @message, @logStream, @log
 | sort @timestamp
@@ -1909,6 +1915,9 @@ git diff --name-only master...
 
 # show staged files
 git diff --name-only --cached
+
+# diff ignoring whitespace
+git diff -w HEAD file.txt
 ```
 
 ## add/remove executable permission
@@ -3334,7 +3343,7 @@ https://stackoverflow.com/a/72327818
 > This is a tip. (Supported since 14 Nov 2023)
 
 > [!IMPORTANT]
-> Crutial information comes here.
+> Crucial information comes here.
 
 > [!CAUTION]
 > Negative potential consequences of an action. (Supported since 14 Nov 2023)
@@ -3435,6 +3444,55 @@ pytest -rA
 
 # show logger output, debug_logging is app specific env var for logger level
 debug_logging=DEBUG pytest -s -o log_cli=true ./src/tests/test_workflow.py
+```
+
+# renovate
+
+## feature branch for testing
+
+Note this merges config from default branch so may produce incorrect results. There is no way to just use the config on a feature branch
+
+https://github.com/renovatebot/renovate/discussions/16108
+
+```json
+# renovate.json
+{
+  "extends": ["github>abc/def"],
+  "baseBranches": ["$default", "/^renovate-test\\.*/"],
+  "useBaseBranchConfig": "merge",
+}
+```
+
+## update dockerfile \_VERSION env vars
+
+- https://docs.renovatebot.com/modules/manager/regex/#advanced-capture
+- https://docs.renovatebot.com/presets-regexManagers/#regexmanagersdockerfileversions
+- The PRs cannot be automerged as we cannot add a customManagers.name to to match
+  on: https://github.com/renovatebot/renovate/issues/21760.
+
+```json
+# renovate.json
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update _VERSION variables in Dockerfiles",
+      "fileMatch": ["(^|/|\\.)Dockerfile$", "(^|/)Dockerfile\\.[^/]*$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\s(?:ENV|ARG) .*?_VERSION=(?<currentValue>.*)\\s"
+      ]
+    }
+  ]
+```
+
+```dockerfile
+# dockerfile
+
+# renovate: datasource=pypi depName=mkdocs versioning=python
+ENV MKDOCS_VERSION=1.6.0
+# renovate: datasource=pypi depName=mkdocs-techdocs-core versioning=python
+ENV MKDOCS_TECHDOCS_CORE_VERSION=1.3.5
+# renovate: datasource=github-releases depName=errata-ai/vale
+ENV VALE_VERSION=3.4.2
 ```
 
 # ruby
