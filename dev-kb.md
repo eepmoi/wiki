@@ -321,7 +321,6 @@ Address: 127.0.0.53#53
 # with working vpc endpoint (no VPC IP as first hop ie not using NAT instance/gateway)
 telnet ecr.ap-southeast-2.amazonaws.com 443
 telnet 10.9.97.134 443 443
-
 ```
 
 # bash
@@ -1946,6 +1945,7 @@ git commit --no-verify
 # tags
 git tag -l "v0.1"
 git tag "v0.2" -f
+git push origin --tags
 git push origin "refs/tags/v0.2" -f # in case there is a branch with the same name
 
 # show oneline commits and tags
