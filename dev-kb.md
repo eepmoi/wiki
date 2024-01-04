@@ -1145,6 +1145,47 @@ else
 fi
 ```
 
+## headers using bash arrary
+
+https://stackoverflow.com/a/46450091
+
+```bash
+HEADERS="Accept: */*
+Content-Type: application/json
+User-Agent: GitHub-Hookshot/74908eb
+X-GitHub-Delivery: <REDACTED>
+X-GitHub-Event: repository
+X-GitHub-Hook-ID: <REDACTED>
+X-GitHub-Hook-Installation-Target-ID: <REDACTED>
+X-GitHub-Hook-Installation-Target-Type: integration
+X-Hub-Signature: <REDACTED>
+X-Hub-Signature-256: <REDACTED>"
+
+PAYLOAD='{
+  "action": "created",
+  "repository": {
+    "id": 831978367,
+    "node_id": "R_kgDOMZb7fw",
+    "name": "andy-test-bobby",
+    "full_name": "seek-test/andy-test-bobby",
+    "private": true,
+    ...<SNIP>...
+   }
+}'
+
+# construct HEADER_ARRAY for curl
+declare -a HEADER_ARRAY=()
+while IFS= read -r line; do
+    HEADER_ARRAY+=('-H' "$line")
+done <<< "$HEADERS"
+
+# print and verify the array content
+printf "%s\n" "${HEADER_ARRAY[@]}"
+
+# Expand HEADER_ARRAY to use with curl as separate arguments
+curl "${HEADER_ARRAY[@]}" -d "$PAYLOAD" https://myendpoint.com.au -vvv
+```
+
 ## with response time
 
 https://stackoverflow.com/a/47944496
@@ -1875,7 +1916,7 @@ istioctl proxy-config log <pod-name[.namespace]> -r
 
 # git
 
-## \_boiler plate
+\*## \_boiler plate
 
 ```bash
 # git config
@@ -2005,6 +2046,18 @@ git add -u ; git commit --amend --no-edit; git push -f
 git add . ; git commit --amend --no-edit; git push -f
 ```
 
+## codeowners
+
+Uses `.gitignore` pattern matching: https://git-scm.com/docs/gitignore#_pattern_format
+
+```CODEOWNERS
+* @org/team-slug
+
+# Exclude files for auto-merging by Renovate bot
+**/dockerfile* # match any file in any folder named dockerfile*
+**/Dockerfile*
+```
+
 ## delete branch
 
 ```bash
@@ -2114,7 +2167,7 @@ https://stackoverflow.com/questions/4479225/how-to-output-git-log-with-the-first
 git log --pretty=oneline --abbrev-commit
 ```
 
-## patch
+## patch\*
 
 https://devconnected.com/how-to-create-and-apply-git-patch-files/#Create_Git_Patch_for_Specific_Commit
 
@@ -3455,7 +3508,7 @@ Note this merges config from default branch so may produce incorrect results. Th
 https://github.com/renovatebot/renovate/discussions/16108
 
 ```json
-# renovate.json
+# renovate.json in master/main
 {
   "extends": ["github>abc/def"],
   "baseBranches": ["$default", "/^renovate-test\\.*/"],
@@ -3674,6 +3727,22 @@ stern --context cluster "istio-ingressgateway-.*" --namespace istio-internal --c
 ```
 
 # terraform
+
+## \_install and setup
+
+```bash
+# tenv
+# https://github.com/tofuutils/tenv?tab=readme-ov-file#technical-details
+tenv tf detect
+tenv tf install
+tenv tf list
+tenv tf list-remove
+tenv tf use 1.9.3
+tenv tf use 1.9.3 --install
+
+# auto complete
+terraform -install-autocomplete
+```
 
 ## \_init plan apply
 
