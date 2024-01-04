@@ -2821,6 +2821,29 @@ kubectl get nodes -o=custom-columns=NODE:.metadata.name,NODEGROUP:".metadata.lab
 kubectl get nodes -o jsonpath="{.items[*].metadata.labels['topology\.kubernetes\.io/zone']}"
 ```
 
+## k9s
+
+custom `views.yaml`
+
+```bash
+views:
+  v1/nodes:
+    columns:
+      - AZ:.metadata.labels.topology\.kubernetes\.io/zone
+      - NODEPOOL:.metadata.labels.karpenter\.sh/nodepool
+      - NODEARCH:.metadata.labels.kubernetes\.io/arch
+      - INSTANCE-TYPE:.metadata.labels.node\.kubernetes\.io/instance-type
+      - CAPACITY-TYPE:.metadata.labels.karpenter\.sh/capacity-type
+      - IP:.status.addresses[?(@.type=="InternalIP")].address
+
+  v1/pods:
+    sortColumn: NODEPOOL:asc
+    columns:
+      - NODEPOOL:.spec.nodeSelector.karpenter\.sh/nodepool
+      - NODEARCH:.spec.nodeSelector.kubernetes\.io/arch
+      - KIND:.metadata.ownerReferences[0].kind
+```
+
 ## kubectl
 
 ### exec into pod
