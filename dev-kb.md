@@ -1946,7 +1946,7 @@ git commit --no-verify
 # tags
 git tag -l "v0.1"
 git tag "v0.2" -f
-git push origin "v0.2" -f
+git push origin "refs/tags/v0.2" -f # in case there is a branch with the same name
 
 # show oneline commits and tags
 git log --pretty=oneline --abbrev-commit
