@@ -2223,7 +2223,6 @@ git am <patch_file>
 # create patch for unstaged changes
 git diff > mypatch.patch
 
-
 # create patch for staged but uncommited changes
 git diff --staged > mypatch.patch
 
